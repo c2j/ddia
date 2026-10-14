@@ -14,6 +14,9 @@ from pathlib import Path
 
 CARD_DIR = Path(__file__).parent / "ch5-cards"
 OUT = Path(__file__).parent / "index.html"
+# 站点部署子路径（Pages 为 repo site：/ddia/）。可用环境变量 SITE_BASE 覆盖
+import os
+SITE_BASE = os.environ.get("SITE_BASE", "/ddia").rstrip("/")
 
 TYPE_META = {
     "dilemma": ("困境卡", "🧭", "先自己想方案，再揭示代价"),
@@ -214,7 +217,10 @@ def render_card(card: dict) -> str:
     if refs_content:
         out.append('<footer class="card-foot card-src"><div class="sec-label">📖 进阶阅读 · 原书对应小节</div>')
         for m in re.finditer(r"\[([^\]]+)\]\(([^)]+)\)", refs_content):
-            out.append(f'<a class="ref-link" href="{m.group(2)}">{m.group(1)} →</a>')
+            url = m.group(2)
+            if url.startswith("/"):
+                url = SITE_BASE + url
+            out.append(f'<a class="ref-link" href="{url}">{m.group(1)} →</a>')
         out.append("</footer>")
     out.append(
         f'<footer class="card-foot">'
