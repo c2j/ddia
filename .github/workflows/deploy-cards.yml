@@ -1,0 +1,71 @@
+name: Deploy Cards Prototype
+
+# 把 prototype/ 权衡卡原型构建后发布到 GitHub Pages：
+#   https://c2j.github.io/ddia/prototype/
+# 与 Hugo 主站（baseURL 指向 ddia.vonng.com）互不影响。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "prototype/**"
+      - ".github/workflows/deploy-cards.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-cards"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build cards HTML
+        run: python prototype/build.py
+
+      - name: Verify build output
+        run: |
+          test -f prototype/index.html
+          test -f prototype/icon-192.png
+          test -f prototype/icon-512.png
+          grep -q 'class="card"' prototype/index.html
+
+      # 卡片原型放在 /prototype/ 子路径下，重写站内原书链接，
+      # 让 "进阶阅读" 直接跳到本 Pages 站点内的 /ch6/... 页面。
+      # 注意：Pages 站点目前只包含 prototype/，主站章节页由 Hugo workflow
+      # 或后续合并部署提供；若本章页面不存在，链接会 404，
+      # 因此这里同时生成一份轻量 Hugo 站点，包含全部章节页。
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r prototype site/prototype
+          # 让卡片的 /ch6#... 链接在本站点内有效：连同 Hugo 构建产物一起发布
+          sudo apt-get update -qq && sudo apt-get install -y -qq hugo golang
+          hugo --gc --minify --destination ../site --source . --baseURL https://c2j.github.io/ddia/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://c2j.github.io/ddia/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
