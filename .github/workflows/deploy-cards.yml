@@ -58,7 +58,11 @@ jobs:
           tar -xzf /tmp/hugo.tar.gz -C /tmp hugo
           sudo mv /tmp/hugo /usr/local/bin/hugo
           hugo version
-          hugo --gc --minify --destination ../site --source . --baseURL https://c2j.github.io/ddia/
+          # destination 用仓库内绝对路径，避免相对路径基准歧义
+          hugo --gc --minify --destination "$GITHUB_WORKSPACE/site" \
+            --source "$GITHUB_WORKSPACE" --baseURL https://c2j.github.io/ddia/
+          test -f site/index.html && echo "root page OK"
+          test -f site/ch6/index.html && echo "ch6 OK"
 
       - uses: actions/upload-pages-artifact@v3
         with:
