@@ -5,29 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DDIA 权衡卡 · 原型</title>
 <script>
-// mermaid CDN with localStorage cache fallback: load lazily only when needed
 (function(){
-  window.__mermaidReady = false;
   function load(src, cb){
     var s = document.createElement('script');
-    s.src = src; s.onload = cb; s.onerror = function(){ /* offline: show source */ };
+    s.src = src; s.onload = cb;
+    s.onerror = function(){ document.body.classList.add('no-mermaid'); };
     document.head.appendChild(s);
   }
-  window.initMermaid = function(){
-    if (window.mermaid) {
-      mermaid.initialize({ startOnLoad:false, theme:'neutral',
-        flowchart:{ useMaxWidth:true, htmlLabels:true },
-        themeVariables:{ fontSize:'13px' } });
-      mermaid.run({ querySelector:'pre.mermaid' }).then(function(){ window.__mermaidReady = true; })
-        .catch(function(e){ console.warn(e); });
-    }
-  };
   document.addEventListener('DOMContentLoaded', function(){
-    // render on demand: first card containing mermaid
-    var need = document.querySelector('pre.mermaid');
-    if (need && !window.__mermaidLoaded) {
-      window.__mermaidLoaded = true;
-      load('https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js', window.initMermaid);
+    if (document.querySelector('pre.mermaid')) {
+      load('https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js', function(){
+        if (window.mermaid) {
+          mermaid.initialize({ startOnLoad:false, theme:'neutral',
+            flowchart:{ useMaxWidth:true, htmlLabels:true },
+            themeVariables:{ fontSize:'13px' } });
+          try { mermaid.run({ querySelector:'pre.mermaid' }); } catch(e){}
+        }
+      });
     }
   });
 })();
@@ -35,59 +29,79 @@
 <style>
 :root{
   --bg:#f6f7f9; --card:#ffffff; --ink:#1c2330; --sub:#5b6472;
-  --line:#e4e7ec; --accent:#2563eb;
+  --line:#e4e7ec; --accent:#2563eb; --ok:#16a34a; --bad:#dc2626;
+  --star:#f59e0b;
   --dilemma:#2563eb; --simulation:#0d9488; --incident:#dc2626;
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#10141b; --card:#171d27; --ink:#e7ebf2; --sub:#9aa4b2;
-    --line:#2a3140; --accent:#60a5fa;
+    --line:#2a3140; --accent:#60a5fa; --ok:#4ade80; --bad:#f87171; --star:#fbbf24;
     --dilemma:#60a5fa; --simulation:#2dd4bf; --incident:#f87171; }
 }
 *{ box-sizing:border-box; }
 body{ margin:0; background:var(--bg); color:var(--ink);
   font:15px/1.75 -apple-system,"PingFang SC","Noto Sans SC",sans-serif; }
-.wrap{ max-width:640px; margin:0 auto; padding:12px 14px 80px; }
+.wrap{ max-width:640px; margin:0 auto; padding:12px 14px 120px; }
+
+/* ---- top bar with progress ---- */
 .topbar{ position:sticky; top:0; z-index:5; background:var(--bg);
-  padding:10px 0 8px; border-bottom:1px solid var(--line); margin-bottom:8px; }
-.topbar h1{ font-size:17px; margin:0; }
-.topbar .sub{ font-size:12px; color:var(--sub); }
+  padding:10px 0 8px; border-bottom:1px solid var(--line); }
+.topbar h1{ font-size:17px; margin:0; display:flex; justify-content:space-between; align-items:baseline;}
+.topbar .progress-num{ font-size:13px; color:var(--accent); font-weight:700; }
+.progress-bar{ height:4px; background:var(--line); border-radius:99px; margin-top:7px; overflow:hidden; }
+.progress-fill{ height:100%; width:0%; background:var(--accent); border-radius:99px; transition:width .4s; }
+.filter-row{ display:flex; gap:8px; margin-top:9px; flex-wrap:wrap; }
+.chip{ font-size:12.5px; padding:4px 12px; border-radius:99px; border:1px solid var(--line);
+  background:var(--card); color:var(--sub); cursor:pointer; user-select:none; }
+.chip.on{ border-color:var(--accent); color:var(--accent); font-weight:700; }
+
 details.tocbox{ border:1px solid var(--line); border-radius:10px;
   background:var(--card); margin:10px 0 18px; }
 details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px; }
-.toc-item{ display:block; padding:7px 14px; border-top:1px solid var(--line);
-  color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.5; }
-.toc-dot{ display:inline-block; width:8px; height:8px; border-radius:50%;
-  margin-right:8px; vertical-align:1px; }
+.toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;
+  border-top:1px solid var(--line); color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.5; }
+.toc-item.read .toc-title{ color:var(--sub); }
+.toc-item.read .toc-title::after{ content:" ✓"; color:var(--ok); font-weight:700; }
+.toc-dot{ flex:0 0 8px; width:8px; height:8px; border-radius:50%; }
 .toc-dot.t-dilemma{ background:var(--dilemma); }
 .toc-dot.t-simulation{ background:var(--simulation); }
 .toc-dot.t-incident{ background:var(--incident); }
+.toc-star{ flex:0 0 14px; text-align:center; color:var(--star); font-size:13px; }
+.toc-star.empty{ visibility:hidden; }
+.toc-title{ flex:1; }
+.toc-item.starred .toc-title{ font-weight:600; }
 
+/* ---- cards ---- */
 .card{ background:var(--card); border:1px solid var(--line); border-radius:14px;
-  padding:18px 18px 14px; margin:18px 0; scroll-margin-top:70px; }
+  padding:18px 18px 14px; margin:18px 0; scroll-margin-top:130px; transition:border-color .3s; }
+.card.is-read{ border-color:color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.card.is-starred{ border-color:color-mix(in srgb, var(--star) 55%, var(--line)); }
 .card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.head-right{ display:flex; align-items:center; gap:10px; }
 .badge{ font-size:12px; font-weight:700; padding:2px 9px; border-radius:99px; color:#fff; }
 .b-dilemma{ background:var(--dilemma); }
 .b-simulation{ background:var(--simulation); }
 .b-incident{ background:var(--incident); }
-.chapter{ font-size:12px; color:var(--sub); }
+.star-btn{ background:none; border:none; font-size:20px; color:var(--sub); cursor:pointer;
+  padding:0 2px; line-height:1; }
+.card.is-starred .star-btn{ color:var(--star); }
+.read-dot{ width:9px; height:9px; border-radius:50%; background:var(--line); }
+.card.is-read .read-dot{ background:var(--ok); }
 .card-title{ font-size:18px; margin:10px 0 2px; line-height:1.45; }
 .hint{ font-size:12px; color:var(--sub); margin:0 0 6px; }
 .sec{ margin-top:14px; }
 .sec-label{ font-size:11.5px; font-weight:700; letter-spacing:.06em;
-  color:var(--sub); text-transform:uppercase; margin-bottom:4px; }
+  color:var(--sub); margin-bottom:4px; }
 .sec-scene{ border-left:3px solid var(--line); padding-left:12px; }
 .sec-question{ background:color-mix(in srgb, var(--accent) 8%, transparent);
   border-radius:10px; padding:12px 14px; font-weight:500; }
 .sec-reveal{ border-top:1px dashed var(--line); padding-top:10px; }
-.sec-figure{ }
 .takeaway{ margin-top:6px; padding:12px 14px; border-radius:10px;
   background:color-mix(in srgb, var(--dilemma) 12%, transparent);
   font-weight:600; line-height:1.7; }
-blockquote{ margin:0 0 6px; padding-left:12px; border-left:3px solid var(--line);
-  color:var(--sub); }
+blockquote{ margin:0 0 6px; padding-left:12px; border-left:3px solid var(--line); color:var(--sub); }
 ul,ol{ margin:4px 0; padding-left:20px; }
 li{ margin:5px 0; }
-li > ul{ margin:2px 0 2px; }
 code{ font-size:.9em; background:var(--line); border-radius:4px; padding:1px 5px;
   font-family:ui-monospace,Menlo,monospace; }
 pre.code{ background:var(--bg); border:1px solid var(--line); border-radius:8px;
@@ -96,43 +110,92 @@ pre.code code{ background:none; padding:0; }
 .mermaid-wrap{ margin:10px 0; padding:8px; border:1px solid var(--line);
   border-radius:10px; overflow-x:auto; text-align:center; }
 pre.mermaid{ margin:0; display:flex; justify-content:center; }
+.no-mermaid pre.mermaid{ white-space:pre-wrap; font-size:11px; color:var(--sub);
+  text-align:left; font-family:ui-monospace,monospace; }
+
+/* ---- quiz ---- */
+.sec-quiz{ border-top:1px solid var(--line); padding-top:12px; }
+.quiz{ margin:12px 0; padding:12px 14px; border:1px solid var(--line); border-radius:10px; }
+.quiz-stem{ font-weight:600; margin-bottom:8px; line-height:1.6; }
+.quiz-opts{ display:flex; gap:8px; flex-wrap:wrap; }
+.quiz-opt{ flex:1 1 auto; min-width:72px; font-size:14px; padding:8px 12px;
+  border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink);
+  cursor:pointer; transition:all .15s; font-family:inherit; line-height:1.5; text-align:left;}
+.quiz-opt:active{ transform:scale(.97); }
+.quiz.answered .quiz-opt{ cursor:default; opacity:.65; }
+.quiz.answered .quiz-opt.picked{ opacity:1; }
+.quiz.answered .quiz-opt.correct{ border-color:var(--ok); color:var(--ok); font-weight:700; opacity:1; }
+.quiz.answered .quiz-opt.wrong{ border-color:var(--bad); color:var(--bad); font-weight:700; opacity:1; }
+.quiz-fb{ display:none; margin-top:8px; font-size:13.5px; font-weight:600; }
+.quiz.answered .quiz-fb{ display:block; }
+.quiz.right .quiz-fb{ color:var(--ok); }
+.quiz.wrongq .quiz-fb{ color:var(--bad); }
+
+/* ---- footer buttons ---- */
+.card-foot{ margin-top:16px; padding-top:12px; border-top:1px solid var(--line);
+  display:flex; justify-content:flex-end; }
+.mark-read-btn{ font-size:13.5px; font-weight:600; padding:8px 16px; border-radius:99px;
+  border:1.5px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer;
+  font-family:inherit; }
+.card.is-read .mark-read-btn{ border-color:var(--ok); color:var(--ok); }
+
+/* ---- bottom nav ---- */
+.bottom-nav{ position:fixed; bottom:0; left:0; right:0; z-index:6;
+  background:color-mix(in srgb, var(--card) 92%, transparent);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  border-top:1px solid var(--line); display:flex; }
+.bottom-nav button{ flex:1; background:none; border:none; padding:12px 4px 20px;
+  font-size:12.5px; color:var(--sub); cursor:pointer; font-family:inherit; }
+.bottom-nav button.on{ color:var(--accent); font-weight:700; }
+.bottom-nav button .cnt{ display:block; font-size:15px; font-weight:800; }
+.hidden{ display:none !important; }
 .footnote{ text-align:center; color:var(--sub); font-size:12px; margin-top:30px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <h1>DDIA 权衡卡 · 原型</h1>
-    <div class="sub">第 5 章复制 + 第 7 章事务 · 15 张 · 手机可读</div>
+    <h1>DDIA 权衡卡 · 原型 <span class="progress-num" id="prog-num">0/15</span></h1>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="filter-row" id="filters">
+      <button class="chip on" data-filter="all">全部</button>
+      <button class="chip" data-filter="unread">未学</button>
+      <button class="chip" data-filter="starred">★ 收藏</button>
+      <button class="chip" data-filter="quiz-wrong">答错过</button>
+    </div>
   </div>
   <details class="tocbox">
     <summary>📋 卡片目录</summary>
-    <a class="toc-item t-incident" href="#I-5.1-01"><span class="toc-dot t-incident"></span>I-5.1-01 · 事故档案：MongoDB 旧主库"复活"导致数据回退</a>
-<a class="toc-item t-incident" href="#I-5.4-01"><span class="toc-dot t-incident"></span>I-5.4-01 · 事故档案：Riak 集群"幽灵 resurrect"，被删除的数据回来了</a>
-<a class="toc-item t-incident" href="#I-7.2-01"><span class="toc-dot t-incident"></span>I-7.2-01 · 事故档案：MySQL RR 下的丢失更新导致库存超卖</a>
-<a class="toc-item t-dilemma" href="#P-5.1-01"><span class="toc-dot t-dilemma"></span>P-5.1-01 · 你的从库挂了，怎么恢复？</a>
-<a class="toc-item t-dilemma" href="#P-5.1-02"><span class="toc-dot t-dilemma"></span>P-5.1-02 · 同步复制到几个副本？</a>
-<a class="toc-item t-dilemma" href="#P-5.2-01"><span class="toc-dot t-dilemma"></span>P-5.2-01 · 用户改了自己的头像，刷新却还是旧的</a>
-<a class="toc-item t-dilemma" href="#P-5.2-02"><span class="toc-dot t-dilemma"></span>P-5.2-02 · 一条评论的回复出现在了评论前面</a>
-<a class="toc-item t-dilemma" href="#P-5.3-01"><span class="toc-dot t-dilemma"></span>P-5.3-01 · 两个数据中心都能写，冲突来了怎么办？</a>
-<a class="toc-item t-dilemma" href="#P-5.4-01"><span class="toc-dot t-dilemma"></span>P-5.4-01 · 不选主库了，写入确认几份才安全？</a>
-<a class="toc-item t-dilemma" href="#P-7.2-01"><span class="toc-dot t-dilemma"></span>P-7.2-01 · 你要为这三种业务各选哪个隔离级别？</a>
-<a class="toc-item t-dilemma" href="#P-7.3-01"><span class="toc-dot t-dilemma"></span>P-7.3-01 · 值班医生系统：两个都撤销了自己的班</a>
-<a class="toc-item t-dilemma" href="#P-7.3-02"><span class="toc-dot t-dilemma"></span>P-7.3-02 · 可串行化真的可以"免费"拿到吗？</a>
-<a class="toc-item t-simulation" href="#S-5.1-01"><span class="toc-dot t-simulation"></span>S-5.1-01 · 主库在确认前崩溃，这笔写入算数吗？</a>
-<a class="toc-item t-simulation" href="#S-5.2-01"><span class="toc-dot t-simulation"></span>S-5.2-01 · 跟踪一条数据在复制滞后期内的真实状态</a>
-<a class="toc-item t-simulation" href="#S-7.2-01"><span class="toc-dot t-simulation"></span>S-7.2-01 · 四种隔离级别下，这笔并发读取各看到什么？</a>
+    <a class="toc-item t-incident" href="#I-5.1-01" data-cid="I-5.1-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.1-01"></span>事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退</a>
+<a class="toc-item t-incident" href="#I-5.4-01" data-cid="I-5.4-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.4-01"></span>事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了</a>
+<a class="toc-item t-incident" href="#I-7.2-01" data-cid="I-7.2-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-7.2-01"></span>事故档案：MySQL RR 下的丢失更新导致库存超卖</a>
+<a class="toc-item t-dilemma" href="#P-5.1-01" data-cid="P-5.1-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-01"></span>你的从库挂了，怎么恢复？</a>
+<a class="toc-item t-dilemma" href="#P-5.1-02" data-cid="P-5.1-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-02"></span>同步复制到几个副本？</a>
+<a class="toc-item t-dilemma" href="#P-5.2-01" data-cid="P-5.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-01"></span>用户改了自己的头像，刷新却还是旧的</a>
+<a class="toc-item t-dilemma" href="#P-5.2-02" data-cid="P-5.2-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-02"></span>一条评论的回复出现在了评论前面</a>
+<a class="toc-item t-dilemma" href="#P-5.3-01" data-cid="P-5.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.3-01"></span>两个数据中心都能写，冲突来了怎么办？</a>
+<a class="toc-item t-dilemma" href="#P-5.4-01" data-cid="P-5.4-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.4-01"></span>不选主库了，写入确认几份才安全？</a>
+<a class="toc-item t-dilemma" href="#P-7.2-01" data-cid="P-7.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.2-01"></span>你要为这三种业务各选哪个隔离级别？</a>
+<a class="toc-item t-dilemma" href="#P-7.3-01" data-cid="P-7.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-01"></span>值班医生系统：两个都撤销了自己的班</a>
+<a class="toc-item t-dilemma" href="#P-7.3-02" data-cid="P-7.3-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-02"></span>可串行化真的可以&quot;免费&quot;拿到吗？</a>
+<a class="toc-item t-simulation" href="#S-5.1-01" data-cid="S-5.1-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.1-01"></span>主库在确认前崩溃，这笔写入算数吗？</a>
+<a class="toc-item t-simulation" href="#S-5.2-01" data-cid="S-5.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.2-01"></span>跟踪一条数据在复制滞后期内的真实状态</a>
+<a class="toc-item t-simulation" href="#S-7.2-01" data-cid="S-7.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-7.2-01"></span>四种隔离级别下，这笔并发读取各看到什么？</a>
   </details>
-<section class="card" id="I-5.1-01">
+<section class="card" id="I-5.1-01" data-cid="I-5.1-01">
 <header class="card-head">
 <span class="badge b-incident">🔥 事故档案</span>
-<span class="chapter">§5.1 领导者与追随者</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
-<h2 class="card-title">事故档案：MongoDB 旧主库"复活"导致数据回退</h2>
+<h2 class="card-title">事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退</h2>
 <p class="hint">真实事故叙事，记忆钩子</p>
 <div class="sec ">
 <div class="sec-label">背景（2016 年前后，MongoDB 社区多起类似报告）</div>
-<p>副本集中主库 M1 因网络分区被集群判死，选举 M2 为新主库。 分区恢复后 M1 重新上线，它仍带着自己未同步给 M2 的若干写入。</p>
+<p>副本集中主库 M1 因网络分区被集群判死，选举 M2 为新主库。</p>
+<p>分区恢复后 M1 重新上线，它仍带着自己未同步给 M2 的若干写入。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">事故经过</div>
@@ -143,14 +206,14 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 </ol>
 <p>M1 上未被复制出去的写入被回退（甚至有报告称出现数据回退到旧状态）。</p>
 <ol>
-<li>应用层没有幂等保护，部分在分区期间的"成功"写入实际上丢失，</li>
+<li>应用层没有幂等保护，部分在分区期间的&quot;成功&quot;写入实际上丢失，</li>
 </ol>
 <p>且无任何报错——数据就是静默地变回了旧值。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">根因</div>
 <ul>
-<li>异步复制下，旧主库崩溃前未复制的写入天然处于"不确定区"。</li>
+<li>异步复制下，旧主库崩溃前未复制的写入天然处于&quot;不确定区&quot;。</li>
 <li>修复机制（把旧主库未同步写入回退到文件）在早期版本中</li>
 </ul>
 <p>可能造成应用可见的数据回退，而非仅回退到一致快照。</p>
@@ -166,32 +229,56 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 </div>
 <div class="sec ">
 <div class="sec-label">与权衡卡的连接</div>
-<p>这正是 P-5.1-02（同步复制到几个副本？）和 S-5.1-01（主库崩溃推演） 的真实版本：半同步/多数派确认不是理论洁癖，是为了把 "静默丢数据"变成"显式失败"。</p>
-<p>📖 原文关联：§5.1、§9"不确定区"；延伸阅读：Jepsen 对 MongoDB 的分析</p>
+<p>这正是 P-5.1-02（同步复制到几个副本？）和 S-5.1-01（主库崩溃推演）</p>
+<p>的真实版本：半同步/多数派确认不是理论洁癖，是为了把</p>
+<p>&quot;静默丢数据&quot;变成&quot;显式失败&quot;。</p>
+<p>📖 原文关联：§5.1、§9&quot;不确定区&quot;；延伸阅读：Jepsen 对 MongoDB 的分析</p>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="I-5.1-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">防止&quot;主从切换后重试导致重复写入&quot;的关键手段是？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 加大超时时间</button>
+<button class="quiz-opt" data-val="1">B. 写入幂等（唯一请求 ID）</button>
+<button class="quiz-opt" data-val="2">C. 增加从库数量</button>
+<button class="quiz-opt" data-val="3">D. 升级硬件</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="I-5.1-01-q1" data-kind="judge" data-correct="true">
+<div class="quiz-stem">异步复制下，旧主库崩溃前未复制的写入处于&quot;不确定区&quot;，可能在新主库上消失。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="I-5.4-01">
+<section class="card" id="I-5.4-01" data-cid="I-5.4-01">
 <header class="card-head">
 <span class="badge b-incident">🔥 事故档案</span>
-<span class="chapter">§5.4 无主复制</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
-<h2 class="card-title">事故档案：Riak 集群"幽灵 resurrect"，被删除的数据回来了</h2>
+<h2 class="card-title">事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了</h2>
 <p class="hint">真实事故叙事，记忆钩子</p>
 <div class="sec ">
 <div class="sec-label">背景</div>
-<p>Riak（Dynamo 风格无主复制）的一个生产集群。某键被用户明确删除， 删除操作以 tombstone（墓碑）标记写入多个副本。</p>
+<p>Riak（Dynamo 风格无主复制）的一个生产集群。某键被用户明确删除，</p>
+<p>删除操作以 tombstone（墓碑）标记写入多个副本。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">事故经过</div>
 <ol>
 <li>删除时部分副本收到了 tombstone，另一些副本因节点临时不可达没有收到。</li>
-<li>集群后期做了节点替换/读修复，从"还有旧值"的副本把旧值</li>
+<li>集群后期做了节点替换/读修复，从&quot;还有旧值&quot;的副本把旧值</li>
 </ol>
 <p>重新传播给了其他副本。</p>
 <ol>
 <li>结果：用户看到<strong>已删除的数据重新出现</strong>。且因为删除用的是</li>
 </ol>
-<p>LWW 语义，tombstone 与复活值之间的"最后写入者"判定 在时钟偏移下可能判错。</p>
+<p>LWW 语义，tombstone 与复活值之间的&quot;最后写入者&quot;判定</p>
+<p>在时钟偏移下可能判错。</p>
 <ol>
 <li>类似问题在多个 Dynamo 风格系统中反复出现（Riak、Cassandra</li>
 </ol>
@@ -200,13 +287,13 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 <div class="sec ">
 <div class="sec-label">根因</div>
 <ul>
-<li>无主复制中"删除"不是一个能靠多数派一次写就全局生效的操作，</li>
+<li>无主复制中&quot;删除&quot;不是一个能靠多数派一次写就全局生效的操作，</li>
 </ul>
 <p>它依赖墓碑在<strong>足够长的时间窗口（GC grace）内</strong>传播到所有副本。</p>
 <ul>
 <li>任何在此窗口外的副本复活（长时间宕机后回归、备份恢复），</li>
 </ul>
-<p>都可能把旧值当作"新值"重新扩散。</p>
+<p>都可能把旧值当作&quot;新值&quot;重新扩散。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">如果当时你负责，怎么避免？</div>
@@ -215,7 +302,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 </ol>
 <p>最长预期节点离线时间。</p>
 <ol>
-<li>对"必须真的消失"的数据（合规删除），不依赖应用层删除——</li>
+<li>对&quot;必须真的消失&quot;的数据（合规删除），不依赖应用层删除——</li>
 </ol>
 <p>用离线压实或专门的合规工具。</p>
 <ol>
@@ -225,20 +312,43 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 </div>
 <div class="sec ">
 <div class="sec-label">与权衡卡的连接</div>
-<p>这是 P-5.4-01（法定人数）揭示部分"反熵是异步的"的极端后果： w + r > n 在墓碑没传播完的窗口内完全失效。</p>
-<p>📖 原文关联：§5.4、§5.1"复制滞后问题"；延伸：Dynamo 论文的 "handling failures" 一节、Cassandra GC grace 文档</p>
+<p>这是 P-5.4-01（法定人数）揭示部分&quot;反熵是异步的&quot;的极端后果：</p>
+<p>w + r &gt; n 在墓碑没传播完的窗口内完全失效。</p>
+<p>📖 原文关联：§5.4、§5.1&quot;复制滞后问题&quot;；延伸：Dynamo 论文的</p>
+<p>&quot;handling failures&quot; 一节、Cassandra GC grace 文档</p>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="I-5.4-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">Dynamo 风格系统中，&quot;已删除数据复活&quot;的根本原因是什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 磁盘损坏</button>
+<button class="quiz-opt" data-val="1">B. 墓碑未在足够长的时间内传播到所有副本，离线副本回归后旧值重新扩散</button>
+<button class="quiz-opt" data-val="2">C. 客户端缓存</button>
+<button class="quiz-opt" data-val="3">D. 备份文件损坏</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="I-5.4-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">节点长时间离线后回归，直接信任其本地数据继续提供服务是安全的。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="I-7.2-01">
+<section class="card" id="I-7.2-01" data-cid="I-7.2-01">
 <header class="card-head">
 <span class="badge b-incident">🔥 事故档案</span>
-<span class="chapter">§7 事务</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">事故档案：MySQL RR 下的丢失更新导致库存超卖</h2>
 <p class="hint">真实事故叙事，记忆钩子</p>
 <div class="sec ">
 <div class="sec-label">背景</div>
-<p>电商系统，MySQL InnoDB，默认隔离级别 REPEATABLE READ。 库存表一行记录商品剩余数量，秒杀流程：</p>
+<p>电商系统，MySQL InnoDB，默认隔离级别 REPEATABLE READ。</p>
+<p>库存表一行记录商品剩余数量，秒杀流程：</p>
 <pre class="code"><code>-- 事务 A 与事务 B 并发执行，均为 RR 级别
 SELECT stock FROM items WHERE id = 1;   -- 两个事务都读到 1
 -- 应用层判断 stock &gt; 0，允许下单
@@ -258,24 +368,27 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <p>实际上后提交的把先提交的结果覆盖）。</p>
 <ol>
 <li>最终：卖出 2 件，库存只减了 1。<strong>一件不存在商品的订单生效了。</strong></li>
+</ol>
 </div>
 <div class="sec ">
 <div class="sec-label">根因</div>
 <ul>
-<li>开发者以为"RR 隔离级别 = 事务安全"，实际上 RR（快照隔离）</li>
+<li>开发者以为&quot;RR 隔离级别 = 事务安全&quot;，实际上 RR（快照隔离）</li>
 </ul>
-<p><strong>不防止丢失更新</strong>：两个事务基于同一个快照做"读-改-写"， 后写的覆盖先写的。</p>
+<p><strong>不防止丢失更新</strong>：两个事务基于同一个快照做&quot;读-改-写&quot;，</p>
+<p>后写的覆盖先写的。</p>
 <ul>
 <li>UPDATE 语句用的是当前读，两个 UPDATE 都成功——</li>
 </ul>
-<p>数据库层面没有违反 RR 的承诺，违反的是<strong>业务不变量 （库存不为负）</strong>，而它从未被数据库表达出来。</p>
+<p>数据库层面没有违反 RR 的承诺，违反的是**业务不变量</p>
+<p>（库存不为负）**，而它从未被数据库表达出来。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">如果当时你负责，怎么避免？</div>
 <ol>
 <li><strong>原子更新</strong>：`UPDATE items SET stock = stock - 1</li>
 </ol>
-<p>WHERE id = 1 AND stock > 0`，检查影响行数。最简单可靠。</p>
+<p>WHERE id = 1 AND stock &gt; 0`，检查影响行数。最简单可靠。</p>
 <ol>
 <li><strong>显式锁</strong>：事务开头 <code>SELECT ... FOR UPDATE</code>，</li>
 </ol>
@@ -285,25 +398,48 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </ol>
 <p>失败则重试。</p>
 <ol>
-<li>结构性思考：这个 bug 属于"丢失更新"异常，</li>
+<li>结构性思考：这个 bug 属于&quot;丢失更新&quot;异常，</li>
 </ol>
 <p>本质是应用层拿着快照数据做了决策。</p>
 </div>
 <div class="sec ">
 <div class="sec-label">与权衡卡的连接</div>
-<p>这是 P-7.2-01（隔离级别选型）中"秒杀扣库存"陷阱的真实版本： <strong>快照隔离的安全感是错觉</strong>，它保证你读到的历史一致， 不保证你基于它做的决策不冲突。</p>
+<p>这是 P-7.2-01（隔离级别选型）中&quot;秒杀扣库存&quot;陷阱的真实版本：</p>
+<p><strong>快照隔离的安全感是错觉</strong>，它保证你读到的历史一致，</p>
+<p>不保证你基于它做的决策不冲突。</p>
 <p>📖 原文关联：§7.2「丢失更新导致的脏写」；§7.3 写偏差同源</p>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="I-7.2-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">防止 RR 下&quot;读-判断-写&quot;导致超卖，最简单可靠的 SQL 写法是？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. SELECT 后在应用层判断</button>
+<button class="quiz-opt" data-val="1">B. UPDATE ... SET stock = stock - 1 WHERE stock > 0 并检查影响行数</button>
+<button class="quiz-opt" data-val="2">C. 提高隔离级别到串行化</button>
+<button class="quiz-opt" data-val="3">D. 加大事务超时</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="I-7.2-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">RR 隔离级别保证了事务的完全安全。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.1-01">
+<section class="card" id="P-5.1-01" data-cid="P-5.1-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.1 领导者与追随者</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">你的从库挂了，怎么恢复？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>单主复制，两个异步从库。其中一个从库所在机器突然断电重启， 它本地落后主库约 2 分钟的写入。</p>
+<p>单主复制，两个异步从库。其中一个从库所在机器突然断电重启，</p>
+<p>它本地落后主库约 2 分钟的写入。</p>
 <p>约束：不允许停机；主库流量很大，不能让从库长时间脱队。</p>
 </div>
 <div class="sec sec-question">
@@ -312,34 +448,60 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p>最直觉的答案"重放主库日志"有个隐藏前提：主库日志不能丢。 于是真正的权衡是——</p>
+<p>最直觉的答案&quot;重放主库日志&quot;有个隐藏前提：主库日志不能丢。</p>
+<p>于是真正的权衡是——</p>
 <ul>
 <li><strong>从主库快照 + 日志恢复</strong>（标准做法）：</li>
 </ul>
-<p>从库取主库某个时间点的快照，再请求快照点之后的所有变更日志重放。 代价：快照必须与日志位点精确对齐，主库要保留足够长的日志， 否则从库要整体重新全量复制。</p>
+<p>从库取主库某个时间点的快照，再请求快照点之后的所有变更日志重放。</p>
+<p>代价：快照必须与日志位点精确对齐，主库要保留足够长的日志，</p>
+<p>否则从库要整体重新全量复制。</p>
 <ul>
 <li><strong>你可能没想到的第三种</strong>：干脆不做增量追赶，直接把这台从库</li>
 </ul>
-<p>踢出集群，用新机器全量重建。流量大时这反而更快、更不易出错， 很多大型运维体系就是这么做的——追赶逻辑的复杂度不值得省那点拷贝。</p>
+<p>踢出集群，用新机器全量重建。流量大时这反而更快、更不易出错，</p>
+<p>很多大型运维体系就是这么做的——追赶逻辑的复杂度不值得省那点拷贝。</p>
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">追赶机制的正确性取决于"日志不丢"这个前提，运维上常用"全量重建"回避它。</div>
+<div class="takeaway">追赶机制的正确性取决于&quot;日志不丢&quot;这个前提，运维上常用&quot;全量重建&quot;回避它。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.1-01-q0" data-kind="judge" data-correct="false">
+<div class="quiz-stem">从库断电重启后，只要主库日志还在，就一定能通过重放日志追上主库。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.1-01-q1" data-kind="choice" data-correct="0">
+<div class="quiz-stem">从库追赶的&quot;快照+日志&quot;方案中，最容易出现问题的环节是什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 主库日志保留时间不够，快照位点之前的日志已被清理</button>
+<button class="quiz-opt" data-val="1">B. 从库磁盘太小</button>
+<button class="quiz-opt" data-val="2">C. 网络带宽不足</button>
+<button class="quiz-opt" data-val="3">D. 快照文件太大</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.1-02">
+<section class="card" id="P-5.1-02" data-cid="P-5.1-02">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.1 领导者与追随者</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">同步复制到几个副本？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>你要为一个支付系统设计复制：1 主 + 2 从。 老板要求"任何已确认的写入都不能因为单机故障而丢失"。</p>
+<p>你要为一个支付系统设计复制：1 主 + 2 从。</p>
+<p>老板要求&quot;任何已确认的写入都不能因为单机故障而丢失&quot;。</p>
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>从库的复制你选全异步、全同步，还是半同步？各自的代价是什么？ 请先选一个并说出理由。</p>
+<p>从库的复制你选全异步、全同步，还是半同步？各自的代价是什么？</p>
+<p>请先选一个并说出理由。</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
@@ -354,7 +516,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <ul>
 <li><strong>半同步</strong>：主库只需等<strong>一个</strong>从库确认。一台从库挂，写入继续且数据不丢；</li>
 </ul>
-<p>但如果那个同步从库挂了而你不处理，系统会退化成全异步而不自知。 所以半同步需要故障检测：同步从库失联后要主动把另一个从库提升为同步。</p>
+<p>但如果那个同步从库挂了而你不处理，系统会退化成全异步而不自知。</p>
+<p>所以半同步需要故障检测：同步从库失联后要主动把另一个从库提升为同步。</p>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
@@ -369,18 +532,39 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">半同步是"数据不丢"和"可用性"之间的实际平衡点，但它引入了新问题：退化检测。</div>
+<div class="takeaway">半同步是&quot;数据不丢&quot;和&quot;可用性&quot;之间的实际平衡点，但它引入了新问题：退化检测。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.1-02-q0" data-kind="choice" data-correct="0">
+<div class="quiz-stem">半同步复制中，同步从库失联而系统未做切换，会发生什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 写入静默退化为全异步，数据不丢的承诺失效</button>
+<button class="quiz-opt" data-val="1">B. 写入直接报错</button>
+<button class="quiz-opt" data-val="2">C. 从库自动升级为主库</button>
+<button class="quiz-opt" data-val="3">D. 数据立即丢失</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.1-02-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">全同步复制（所有从库确认）比半同步更安全，因此是生产系统推荐的默认选择。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.2-01">
+<section class="card" id="P-5.2-01" data-cid="P-5.2-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.2 复制滞后问题</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">用户改了自己的头像，刷新却还是旧的</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>你的社交 App 是单主复制 + 多个只读从库，读请求全部走从库以分担压力。 用户投诉：我刚改了头像，刷新页面还是旧头像，但别人看我的新头像没问题。</p>
+<p>你的社交 App 是单主复制 + 多个只读从库，读请求全部走从库以分担压力。</p>
+<p>用户投诉：我刚改了头像，刷新页面还是旧头像，但别人看我的新头像没问题。</p>
 <p>约束：不能把所有读都打到主库，那会打爆。</p>
 </div>
 <div class="sec sec-question">
@@ -391,72 +575,122 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">揭示</div>
 <p>这是<strong>读己之写</strong>（read-your-writes）问题。朴素方案和它们的坑：</p>
 <ul>
-<li><strong>"改完之后 N 秒内读主库"</strong>：最常用。坑在于 N 不好定：跨机房复制时</li>
+<li><strong>&quot;改完之后 N 秒内读主库&quot;</strong>：最常用。坑在于 N 不好定：跨机房复制时</li>
 </ul>
-<p>滞后可能到分钟级；而且"改"不一定发生在你记得的地方 （改头像是一个入口，用户可能从另一个设备改）。</p>
+<p>滞后可能到分钟级；而且&quot;改&quot;不一定发生在你记得的地方</p>
+<p>（改头像是一个入口，用户可能从另一个设备改）。</p>
 <ul>
-<li><strong>按"用户是否最近改过"路由</strong>：记录每个用户最近写入的时间戳，</li>
+<li><strong>按&quot;用户是否最近改过&quot;路由</strong>：记录每个用户最近写入的时间戳，</li>
 </ul>
-<p>读时对比从库复制位点，位点不够就换主库读或等待。 精确，但每个请求多一次元数据查询。</p>
+<p>读时对比从库复制位点，位点不够就换主库读或等待。</p>
+<p>精确，但每个请求多一次元数据查询。</p>
 <ul>
 <li><strong>你可能没想到的维度</strong>：跨设备场景。用户在手机上改、在电脑上看，</li>
 </ul>
-<p>电脑端的请求拿不到手机端的"我改过"状态。 解法是把最后写入时间戳记在<strong>账户级别</strong>甚至放在客户端请求里带上。</p>
+<p>电脑端的请求拿不到手机端的&quot;我改过&quot;状态。</p>
+<p>解法是把最后写入时间戳记在<strong>账户级别</strong>甚至放在客户端请求里带上。</p>
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">"读己之写"的难点不在路由，在"如何知道这次读是'自己刚写过的'"，尤其跨设备。</div>
+<div class="takeaway">&quot;读己之写&quot;的难点不在路由，在&quot;如何知道这次读是&#x27;自己刚写过的&#x27;&quot;，尤其跨设备。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.2-01-q0" data-kind="judge" data-correct="false">
+<div class="quiz-stem">&quot;改完之后 N 秒内读主库&quot;是精确可靠的读己之写方案。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.2-01-q1" data-kind="choice" data-correct="0">
+<div class="quiz-stem">用户在手机上改了资料，在电脑上看不到更新，最可能的原因是什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 电脑端请求走了滞后的从库，且"我改过"标记没跨设备同步</button>
+<button class="quiz-opt" data-val="1">B. 电脑网络故障</button>
+<button class="quiz-opt" data-val="2">C. 主库宕机</button>
+<button class="quiz-opt" data-val="3">D. 数据库索引失效</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.2-02">
+<section class="card" id="P-5.2-02" data-cid="P-5.2-02">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.2 复制滞后问题</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">一条评论的回复出现在了评论前面</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>还是那个多从库的社交 App。某条热门帖子里，用户 A 的提问出现在 列表顶部，但下面 B 的回复因为走了滞后更严重的从库，排序反而靠后， 看起来像"回复先于提问发生"。</p>
+<p>还是那个多从库的社交 App。某条热门帖子里，用户 A 的提问出现在</p>
+<p>列表顶部，但下面 B 的回复因为走了滞后更严重的从库，排序反而靠后，</p>
+<p>看起来像&quot;回复先于提问发生&quot;。</p>
 <p>约束：评论量大，不可能每条评论都保证全局精确顺序。</p>
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>这个"因果倒置"要不要修？修的话修到什么粒度？</p>
+<p>这个&quot;因果倒置&quot;要不要修？修的话修到什么粒度？</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p>这是<strong>单调读</strong>之上的更深问题：<strong>一致前缀读</strong>（consistent prefix read）。 关键认知：不是所有读都需要它——</p>
+<p>这是<strong>单调读</strong>之上的更深问题：<strong>一致前缀读</strong>（consistent prefix read）。</p>
+<p>关键认知：不是所有读都需要它——</p>
 <ul>
 <li><strong>不用修的场景</strong>：互相没有因果关系的两条数据（两条独立动态），</li>
 </ul>
 <p>顺序错无所谓。用户对这种错序几乎无感。</p>
 <ul>
-<li><strong>该修的判定</strong>：只要存在"后者引用前者"的因果关系（回复引用提问，</li>
+<li><strong>该修的判定</strong>：只要存在&quot;后者引用前者&quot;的因果关系（回复引用提问，</li>
 </ul>
 <p>转发引用原帖），倒序就是可感知的荒谬。</p>
 <ul>
 <li><strong>修法</strong>：让因果相关的写入带上依赖信息，读取时把整条因果链路由到</li>
 </ul>
-<p>同一个从库，或校验链完整后才显示。分区（分片）数据库里这很贵， 因为不同分片间没有全局顺序。</p>
+<p>同一个从库，或校验链完整后才显示。分区（分片）数据库里这很贵，</p>
+<p>因为不同分片间没有全局顺序。</p>
 <ul>
 <li><strong>你可能没想到的答案</strong>：很多产品直接在 UI 上规避——热门帖子</li>
 </ul>
-<p>按楼层号排序而不是时间戳排序，楼层号由主库统一分配。 用产品手段绕开分布式难题，是工程里被低估的选项。</p>
+<p>按楼层号排序而不是时间戳排序，楼层号由主库统一分配。</p>
+<p>用产品手段绕开分布式难题，是工程里被低估的选项。</p>
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">因果倒置只需要在"存在引用关系"的数据上修，且常常可以用产品手段绕开。</div>
+<div class="takeaway">因果倒置只需要在&quot;存在引用关系&quot;的数据上修，且常常可以用产品手段绕开。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.2-02-q0" data-kind="judge" data-correct="false">
+<div class="quiz-stem">为了保证正确性，所有评论列表都必须实现一致前缀读。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.2-02-q1" data-kind="choice" data-correct="1">
+<div class="quiz-stem">以下哪种数据倒序最需要修复？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 两条互不相关的动态顺序颠倒</button>
+<button class="quiz-opt" data-val="1">B. 用户对自己帖子的回复出现在原帖之前</button>
+<button class="quiz-opt" data-val="2">C. 广告和帖子的顺序变化</button>
+<button class="quiz-opt" data-val="3">D. 点赞数显示略有延迟</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.3-01">
+<section class="card" id="P-5.3-01" data-cid="P-5.3-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.3 多主复制</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">两个数据中心都能写，冲突来了怎么办？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>你的协作编辑类产品在美东和欧洲各有一个数据中心，都接受写入、 异步互相同步（多主复制）。两个用户几乎同时把<strong>同一个文档的标题</strong> 改成了不同的值。</p>
+<p>你的协作编辑类产品在美东和欧洲各有一个数据中心，都接受写入、</p>
+<p>异步互相同步（多主复制）。两个用户几乎同时把<strong>同一个文档的标题</strong></p>
+<p>改成了不同的值。</p>
 <p>约束：不能让任何一端的用户等待另一端数据中心确认。</p>
 </div>
 <div class="sec sec-question">
@@ -469,15 +703,16 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <ul>
 <li><strong>写时检测（主库层面同步解决）</strong>：等价于把多主退化成需要协调的写入，</li>
 </ul>
-<p>违反"不等待另一端"的约束，排除。</p>
+<p>违反&quot;不等待另一端&quot;的约束，排除。</p>
 <ul>
 <li><strong>读时/异步解决</strong>：冲突先共存，之后收敛。这是多主的实际选择。</li>
 </ul>
-<p>剩下的问题才是"怎么收敛"：</p>
+<p>剩下的问题才是&quot;怎么收敛&quot;：</p>
 <ul>
-<li><strong>LWW（最后写入者胜）</strong>：最简单，但"最后"由时钟决定，</li>
+<li><strong>LWW（最后写入者胜）</strong>：最简单，但&quot;最后&quot;由时钟决定，</li>
 </ul>
-<p>时钟偏移会静默丢弃某一方的写入。标题这种字段也许可接受， 购物车删条目绝不可接受。</p>
+<p>时钟偏移会静默丢弃某一方的写入。标题这种字段也许可接受，</p>
+<p>购物车删条目绝不可接受。</p>
 <ul>
 <li><strong>保留所有值 + 应用层合并</strong>：让用户看到两个版本并选择。</li>
 </ul>
@@ -485,49 +720,75 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <ul>
 <li><strong>CRDT</strong>：为特定数据结构（计数器、集合、序列）设计的可自动合并</li>
 </ul>
-<p>表示。编辑器场景的行业主流就是 CRDT 或 OT 算法， 而不是数据库层的通用冲突解决。</p>
+<p>表示。编辑器场景的行业主流就是 CRDT 或 OT 算法，</p>
+<p>而不是数据库层的通用冲突解决。</p>
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">多主冲突解决的第一问是"何时解决"（必然是异步），第二问才是"怎么收敛"；且通用方案（LWW）往往不如领域专用方案（CRDT）。</div>
+<div class="takeaway">多主冲突解决的第一问是&quot;何时解决&quot;（必然是异步），第二问才是&quot;怎么收敛&quot;；且通用方案（LWW）往往不如领域专用方案（CRDT）。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.3-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">多主复制中，冲突解决的时机只能是？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 写入时同步解决</button>
+<button class="quiz-opt" data-val="1">B. 读时或异步解决</button>
+<button class="quiz-opt" data-val="2">C. 定时批量解决</button>
+<button class="quiz-opt" data-val="3">D. 由用户手动解决</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.3-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">LWW 是大多数场景下最可靠的冲突解决方式。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-5.4-01">
+<section class="card" id="P-5.4-01" data-cid="P-5.4-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§5.4 无主复制</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">不选主库了，写入确认几份才安全？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>你用无主复制（Dynamo 风格）：5 个副本，客户端直接写多个副本， 没有主库。有个后台任务会修复滞后副本（读修复 + 反熵）。</p>
+<p>你用无主复制（Dynamo 风格）：5 个副本，客户端直接写多个副本，</p>
+<p>没有主库。有个后台任务会修复滞后副本（读修复 + 反熵）。</p>
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>写确认数 w 和读副本数 r 怎么定？为什么这样定能（或不能）保证读到最新值？ 请先写出你选的数字和推理。</p>
+<p>写确认数 w 和读副本数 r 怎么定？为什么这样定能（或不能）保证读到最新值？</p>
+<p>请先写出你选的数字和推理。</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p>核心不等式 <strong>w + r > n</strong>（本例 n=5，比如 w=2, r=4 或 w=3, r=3）： 读写集合必有交集，至少有一个副本持有新值。</p>
-<p>但这是全卡最重要的陷阱——<strong>交集只是"必要条件"而非"充分保证"</strong>：</p>
+<p>核心不等式 <strong>w + r &gt; n</strong>（本例 n=5，比如 w=2, r=4 或 w=3, r=3）：</p>
+<p>读写集合必有交集，至少有一个副本持有新值。</p>
+<p>但这是全卡最重要的陷阱——<strong>交集只是&quot;必要条件&quot;而非&quot;充分保证&quot;</strong>：</p>
 <ul>
 <li><strong>并发写没有全序</strong>：两个客户端并发写同一个键，两个集合都会收到</li>
 </ul>
-<p>自己的版本，交集副本拿到的"新值"取决于到达顺序。需要 LWW 或 版本向量兜底。</p>
+<p>自己的版本，交集副本拿到的&quot;新值&quot;取决于到达顺序。需要 LWW 或</p>
+<p>版本向量兜底。</p>
 <ul>
 <li><strong>写与读并发</strong>：读开始后才完成的写，照样读不到。</li>
-<li><strong>w + r > n 不保证单调读</strong>：两次连续读可能碰到不同的副本集合，</li>
+<li><strong>w + r &gt; n 不保证单调读</strong>：两次连续读可能碰到不同的副本集合，</li>
 </ul>
 <p>第一次读到新值、第二次反而读到旧值。</p>
 <ul>
 <li><strong>反熵是异步的</strong>：一个副本上被丢弃的旧值（LWW 败者）在修复前一直存在，</li>
 </ul>
 <p>如果你恰好像限读它，等式失效。</p>
-<p>所以书中说 w + r > n 只能达到<strong>法定人数可读</strong>（quorum readable）， 不是强一致。</p>
+<p>所以书中说 w + r &gt; n 只能达到<strong>法定人数可读</strong>（quorum readable），</p>
+<p>不是强一致。</p>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
-<p>w + r > n 的交集保证，以及它为什么不是充分条件：</p>
+<p>w + r &gt; n 的交集保证，以及它为什么不是充分条件：</p>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB
     subgraph n=5 副本
         W2["写入集合 w=3<br>（n1 n2 n3 收到新值）"] --- R2["读取集合 r=3<br>（本轮读到 n3 n4 n5）"]
@@ -538,13 +799,33 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">w + r > n 保证"读到某个足够新的副本"，不保证"读到全局最新、也不保证两次读一致"。</div>
+<div class="takeaway">w + r &gt; n 保证&quot;读到某个足够新的副本&quot;，不保证&quot;读到全局最新、也不保证两次读一致&quot;。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-5.4-01-q0" data-kind="judge" data-correct="false">
+<div class="quiz-stem">只要配置满足 w + r &gt; n，读到的就一定是全局最新的值。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-5.4-01-q1" data-kind="choice" data-correct="1">
+<div class="quiz-stem">n=5 时，以下哪组配置满足法定人数条件？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. w=2, r=3</button>
+<button class="quiz-opt" data-val="1">B. w=3, r=3</button>
+<button class="quiz-opt" data-val="2">C. w=1, r=4</button>
+<button class="quiz-opt" data-val="3">D. w=2, r=2</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-7.2-01">
+<section class="card" id="P-7.2-01" data-cid="P-7.2-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§7 事务（四种隔离级别总览）</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">你要为这三种业务各选哪个隔离级别？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
@@ -559,20 +840,29 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>三种业务各选哪个隔离级别：读未提交（RU）/ 读已提交（RC）/ 可重复读（RR）/ 可串行化（S）？请先给三个答案和理由。</p>
+<p>三种业务各选哪个隔离级别：读未提交（RU）/ 读已提交（RC）/</p>
+<p>可重复读（RR）/ 可串行化（S）？请先给三个答案和理由。</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
 <ul>
 <li><strong>报表统计 → RC（甚至 RR）</strong>：它读的是快照，不涉及并发写冲突，</li>
 </ul>
-<p>关键是别读到"写了一半的事务"（脏读）。RU 省不了多少性能 还会看到未提交数据，没有任何理由选它。 这就是为什么 <strong>RU 在实践中几乎没人用</strong>——它唯一"优势"是省一点 读检查开销，代价是正确性。</p>
+<p>关键是别读到&quot;写了一半的事务&quot;（脏读）。RU 省不了多少性能</p>
+<p>还会看到未提交数据，没有任何理由选它。</p>
+<p>这就是为什么 <strong>RU 在实践中几乎没人用</strong>——它唯一&quot;优势&quot;是省一点</p>
+<p>读检查开销，代价是正确性。</p>
 <ul>
 <li><strong>秒杀扣库存 → 看起来 RR 就够，其实是陷阱</strong>：RR 防止你两次</li>
 </ul>
-<p><code>SELECT</code> 读到不同库存，但<strong>它不防止两个事务同时读到"剩 1 个" 然后都扣减成功</strong>——卖超了。这是丢失更新（lost update）， 需要 <code>SELECT ... FOR UPDATE</code>（显式加锁）或原子 <code>UPDATE ... SET stock = stock - 1 WHERE stock > 0</code> 绕过。 换 S 级别也能防，但高并发下代价大；工程主流是 RC/RR + 原子写。</p>
+<p><code>SELECT</code> 读到不同库存，但**它不防止两个事务同时读到&quot;剩 1 个&quot;</p>
+<p>然后都扣减成功**——卖超了。这是丢失更新（lost update），</p>
+<p>需要 <code>SELECT ... FOR UPDATE</code>（显式加锁）或原子</p>
+<p><code>UPDATE ... SET stock = stock - 1 WHERE stock &gt; 0</code> 绕过。</p>
+<p>换 S 级别也能防，但高并发下代价大；工程主流是 RC/RR + 原子写。</p>
 <ul>
 <li><strong>余额查询 → RC 足矣</strong>：单行读，RC 保证不读脏数据就够了。</li>
+</ul>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
@@ -587,38 +877,67 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">隔离级别的选择不是"越高越好"，而是"哪些异常你可能遇到"；而最常见的坑是：RR 挡不住丢失更新。</div>
+<div class="takeaway">隔离级别的选择不是&quot;越高越好&quot;，而是&quot;哪些异常你可能遇到&quot;；而最常见的坑是：RR 挡不住丢失更新。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-7.2-01-q0" data-kind="choice" data-correct="2">
+<div class="quiz-stem">以下哪个异常是 RR（快照隔离）无法防止的？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 脏读</button>
+<button class="quiz-opt" data-val="1">B. 不可重复读</button>
+<button class="quiz-opt" data-val="2">C. 丢失更新</button>
+<button class="quiz-opt" data-val="3">D. 读到未提交数据</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-7.2-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">隔离级别越高越好，生产系统应默认使用可串行化。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-7.3-01">
+<section class="card" id="P-7.3-01" data-cid="P-7.3-01">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§7 事务</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">值班医生系统：两个都撤销了自己的班</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>医院值班系统。规则：<strong>同一时段必须至少有一名医生在值班</strong>。 医生可以先查询自己是否值班，不是的话可提交"请假"事务。</p>
-<p>现在：Alice 和 Bob 都在值班。两人几乎同时各自打开页面， 都看到"对方在值班"，于是都提交了请假事务。</p>
+<p>医院值班系统。规则：<strong>同一时段必须至少有一名医生在值班</strong>。</p>
+<p>医生可以先查询自己是否值班，不是的话可提交&quot;请假&quot;事务。</p>
+<p>现在：Alice 和 Bob 都在值班。两人几乎同时各自打开页面，</p>
+<p>都看到&quot;对方在值班&quot;，于是都提交了请假事务。</p>
 <p>两个事务都成功。时段内没有任何医生值班。</p>
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>这个场景在 RC 和 RR 隔离级别下分别会被阻止吗？ 如果不被阻止，你用什么手段阻止？请先想，再看揭示。</p>
+<p>这个场景在 RC 和 RR 隔离级别下分别会被阻止吗？</p>
+<p>如果不被阻止，你用什么手段阻止？请先想，再看揭示。</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p><strong>RC 和 RR 都不会阻止它</strong>。这是<strong>写偏差（write skew）</strong>： 两个事务读了同一批数据（"谁在值班"），基于读到的结果写了 <strong>不同的行</strong>（Alice 请假、Bob 请假）。互不修改对方的行， 快照隔离（RR）管不到它。</p>
-<p>为什么快照隔离挡不住？因为它承诺的是"每个事务的读来自一致快照" ——两个事务各自看快照都没问题，合起来却违反了业务不变量 （"至少一人值班"）。</p>
+<p><strong>RC 和 RR 都不会阻止它</strong>。这是<strong>写偏差（write skew）</strong>：</p>
+<p>两个事务读了同一批数据（&quot;谁在值班&quot;），基于读到的结果写了</p>
+<p><strong>不同的行</strong>（Alice 请假、Bob 请假）。互不修改对方的行，</p>
+<p>快照隔离（RR）管不到它。</p>
+<p>为什么快照隔离挡不住？因为它承诺的是&quot;每个事务的读来自一致快照&quot;</p>
+<p>——两个事务各自看快照都没问题，合起来却违反了业务不变量</p>
+<p>（&quot;至少一人值班&quot;）。</p>
 <p><strong>可选的解法</strong>：</p>
 <ul>
-<li><strong><code>SELECT ... FOR UPDATE</code> 显式锁定</strong>"值班中的所有医生"这些行，</li>
+<li><strong><code>SELECT ... FOR UPDATE</code> 显式锁定</strong>&quot;值班中的所有医生&quot;这些行，</li>
 </ul>
 <p>强制两个事务串行化。最直接，但要求你<strong>知道该锁哪些行</strong>。</p>
 <ul>
-<li><strong>物化冲突（materializing conflicts）</strong>：把"值班时段"本身</li>
+<li><strong>物化冲突（materializing conflicts）</strong>：把&quot;值班时段&quot;本身</li>
 </ul>
-<p>变成数据库里的行（时_slots 表），请假 = 更新该行， 冲突就落在同一行上了。丑但有效。</p>
+<p>变成数据库里的行（时_slots 表），请假 = 更新该行，</p>
+<p>冲突就落在同一行上了。丑但有效。</p>
 <ul>
 <li><strong>可串行化隔离（SSI）</strong>：数据库检测到两个事务读了互相影响的数据</li>
 </ul>
@@ -626,23 +945,45 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">写偏差 = "我读到的别改，我改的你别读"，快照隔离对它无能为力，这是升级到 SSI 的主要理由。</div>
+<div class="takeaway">写偏差 = &quot;我读到的别改，我改的你别读&quot;，快照隔离对它无能为力，这是升级到 SSI 的主要理由。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-7.3-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">写偏差（write skew）的特征是？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 两个事务写同一行，后者覆盖前者</button>
+<button class="quiz-opt" data-val="1">B. 两个事务读同一批数据、写不同的行，合起来违反业务不变量</button>
+<button class="quiz-opt" data-val="2">C. 读到未提交数据</button>
+<button class="quiz-opt" data-val="3">D. 两次读结果不同</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-7.3-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">快照隔离（RR）能防止写偏差。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="P-7.3-02">
+<section class="card" id="P-7.3-02" data-cid="P-7.3-02">
 <header class="card-head">
 <span class="badge b-dilemma">🧭 困境卡</span>
-<span class="chapter">§7 事务</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
-<h2 class="card-title">可串行化真的可以"免费"拿到吗？</h2>
+<h2 class="card-title">可串行化真的可以&quot;免费&quot;拿到吗？</h2>
 <p class="hint">先自己想方案，再揭示代价</p>
 <div class="sec sec-scene">
-<p>你的团队在评审数据库选型。有人提议："直接全用可串行化（Serializable）， 正确性问题一劳永逸，不用再操心各种异常。" 反对者说性能不可接受。</p>
-<p>约束：系统读写混合，冲突集中在 10% 的热点账户上，其余 90% 数据 几乎无并发冲突。</p>
+<p>你的团队在评审数据库选型。有人提议：&quot;直接全用可串行化（Serializable），</p>
+<p>正确性问题一劳永逸，不用再操心各种异常。&quot; 反对者说性能不可接受。</p>
+<p>约束：系统读写混合，冲突集中在 10% 的热点账户上，其余 90% 数据</p>
+<p>几乎无并发冲突。</p>
 </div>
 <div class="sec sec-question">
 <div class="sec-label">停下来，先想你的答案</div>
-<p>"全用 Serializable"的真实代价是什么？有没有办法只在对的地方付这个代价？</p>
+<p>&quot;全用 Serializable&quot;的真实代价是什么？有没有办法只在对的地方付这个代价？</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
@@ -650,16 +991,23 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <ul>
 <li><strong>两阶段锁定（2PL，传统 S lock）</strong>：读也加锁、写也加锁。</li>
 </ul>
-<p>代价是<strong>所有</strong>并发被压低：读会阻塞写、写会阻塞读， 90% 无冲突的数据也被殃及，还可能死锁需要重试。 "全用 S"在 2PL 下确实很贵。</p>
+<p>代价是<strong>所有</strong>并发被压低：读会阻塞写、写会阻塞读，</p>
+<p>90% 无冲突的数据也被殃及，还可能死锁需要重试。</p>
+<p>&quot;全用 S&quot;在 2PL 下确实很贵。</p>
 <ul>
 <li><strong>串行执行（单线程，如 VoltDB）</strong>：所有事务排队执行。</li>
 </ul>
-<p>极快的前提是<strong>每个事务很短、数据能放进内存</strong>。 一个慢查询就拖垮整个系统吞吐。适合特定架构，不是通用答案。</p>
+<p>极快的前提是<strong>每个事务很短、数据能放进内存</strong>。</p>
+<p>一个慢查询就拖垮整个系统吞吐。适合特定架构，不是通用答案。</p>
 <ul>
 <li><strong>SSI（可串行化快照隔离，PostgreSQL/CockroachDB 的选择）</strong>：</li>
 </ul>
-<p>乐观策略——先放行，提交时检测读写冲突再中止。 <strong>无冲突的事务（你的 90%）几乎零开销</strong>， 冲突集中处中止率升高、需要应用层重试。</p>
-<p>所以反对者对了一半：2PL 时代"全 S"确实贵； SSI 时代"全 S"对低冲突负载是可负担的——但<strong>必须配套重试逻辑</strong>， 应用要习惯"事务可能被中止，请再来一次"。</p>
+<p>乐观策略——先放行，提交时检测读写冲突再中止。</p>
+<p><strong>无冲突的事务（你的 90%）几乎零开销</strong>，</p>
+<p>冲突集中处中止率升高、需要应用层重试。</p>
+<p>所以反对者对了一半：2PL 时代&quot;全 S&quot;确实贵；</p>
+<p>SSI 时代&quot;全 S&quot;对低冲突负载是可负担的——但<strong>必须配套重试逻辑</strong>，</p>
+<p>应用要习惯&quot;事务可能被中止，请再来一次&quot;。</p>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
@@ -677,54 +1025,117 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">记住这一句</div>
 <div class="takeaway">可串行化的代价取决于它的实现：2PL 压低一切并发，单线程要求短事务，SSI 只惩罚真冲突但要求应用会重试。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="P-7.3-02-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">SSI 的主要代价是什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 所有读写互相阻塞</button>
+<button class="quiz-opt" data-val="1">B. 冲突集中处中止率升高，应用必须实现重试</button>
+<button class="quiz-opt" data-val="2">C. 只支持内存数据</button>
+<button class="quiz-opt" data-val="3">D. 只支持单表</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="P-7.3-02-q1" data-kind="judge" data-correct="true">
+<div class="quiz-stem">SSI 下无冲突的事务几乎零额外开销。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="S-5.1-01">
+<section class="card" id="S-5.1-01" data-cid="S-5.1-01">
 <header class="card-head">
 <span class="badge b-simulation">⏱ 推演卡</span>
-<span class="chapter">§5.1 领导者与追随者</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">主库在确认前崩溃，这笔写入算数吗？</h2>
 <p class="hint">逐步推演系统行为，先预测再看答案</p>
 <div class="sec sec-question">
 <div class="sec-label">推演序列（每步先自己预测，再看下一步）</div>
-<p><strong>系统</strong>：主库 L，同步从库 S1，异步从库 S2。客户端发出写入 X = "转账 100 元"。</p>
-<p><strong>步骤 1</strong>：L 收到 X，写入本地日志，但尚未向任何从库转发。 → 此时 X 存在于哪些机器？</p>
-<p><strong>步骤 2</strong>：L 把 X 发给 S1（同步），S1 写入并确认。 → 此时 L 可以向客户端确认 X 了吗？</p>
-<p><strong>步骤 3</strong>：L 在向客户端发确认<strong>之前</strong>崩溃，同时 L 的磁盘损坏。 S2 还没收到 X。客户端没有收到"成功"，但也没有收到"失败"。</p>
-<p><strong>步骤 4</strong>：集群选举 S1 为新主库并恢复服务。 → X 现在处于什么状态？客户端应该重试写入 X 吗？</p>
+<p><strong>系统</strong>：主库 L，同步从库 S1，异步从库 S2。客户端发出写入 X = &quot;转账 100 元&quot;。</p>
+<p><strong>步骤 1</strong>：L 收到 X，写入本地日志，但尚未向任何从库转发。</p>
+<p>→ 此时 X 存在于哪些机器？</p>
+<p><strong>步骤 2</strong>：L 把 X 发给 S1（同步），S1 写入并确认。</p>
+<p>→ 此时 L 可以向客户端确认 X 了吗？</p>
+<p><strong>步骤 3</strong>：L 在向客户端发确认<strong>之前</strong>崩溃，同时 L 的磁盘损坏。</p>
+<p>S2 还没收到 X。客户端没有收到&quot;成功&quot;，但也没有收到&quot;失败&quot;。</p>
+<p><strong>步骤 4</strong>：集群选举 S1 为新主库并恢复服务。</p>
+<p>→ X 现在处于什么状态？客户端应该重试写入 X 吗？</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p><strong>步骤 1</strong>：只有 L。X 是"未确认"状态。</p>
+<p><strong>步骤 1</strong>：只有 L。X 是&quot;未确认&quot;状态。</p>
 <p><strong>步骤 2</strong>：可以。S1 已持久化 X，L 崩溃后 X 仍可存活。</p>
-<p><strong>步骤 3</strong>：关键点——<strong>"不确定区"（ambiguous write）</strong>。 客户端超时后无法区分"提交了"和"没提交"。 X 在 S1 上存在，但旧主库已无法说明它是否被确认过。</p>
-<p><strong>步骤 4</strong>：S1 上有 X，新主库恢复后 X 会<strong>出现</strong>。 客户端重试 X 会导致重复转账（如果没有幂等键）； 不重试则可能丢失这笔转账（如果 S1 的日志也被判无效）。 两种选择都可能错，这正是分布式事务和幂等性在后续章节存在的理由。</p>
+<p><strong>步骤 3</strong>：关键点——<strong>&quot;不确定区&quot;（ambiguous write）</strong>。</p>
+<p>客户端超时后无法区分&quot;提交了&quot;和&quot;没提交&quot;。</p>
+<p>X 在 S1 上存在，但旧主库已无法说明它是否被确认过。</p>
+<p><strong>步骤 4</strong>：S1 上有 X，新主库恢复后 X 会<strong>出现</strong>。</p>
+<p>客户端重试 X 会导致重复转账（如果没有幂等键）；</p>
+<p>不重试则可能丢失这笔转账（如果 S1 的日志也被判无效）。</p>
+<p>两种选择都可能错，这正是分布式事务和幂等性在后续章节存在的理由。</p>
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">客户端视角的"不确定"（超时无响应）和系统内部的复制状态互相纠缠，这是幂等写入被强制要求的最根本原因。</div>
+<div class="takeaway">客户端视角的&quot;不确定&quot;（超时无响应）和系统内部的复制状态互相纠缠，这是幂等写入被强制要求的最根本原因。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="S-5.1-01-q0" data-kind="choice" data-correct="2">
+<div class="quiz-stem">客户端写请求超时但没有收到成功或失败响应，这笔写入处于什么状态？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 一定失败了</button>
+<button class="quiz-opt" data-val="1">B. 一定成功了</button>
+<button class="quiz-opt" data-val="2">C. 不确定，需要幂等机制保证重试安全</button>
+<button class="quiz-opt" data-val="3">D. 由数据库自动撤销</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="S-5.1-01-q1" data-kind="judge" data-correct="false">
+<div class="quiz-stem">只要主库在崩溃前把写入复制给了至少一个从库，客户端重试就一定是安全的。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="S-5.2-01">
+<section class="card" id="S-5.2-01" data-cid="S-5.2-01">
 <header class="card-head">
 <span class="badge b-simulation">⏱ 推演卡</span>
-<span class="chapter">§5.2 复制滞后问题</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">跟踪一条数据在复制滞后期内的真实状态</h2>
 <p class="hint">逐步推演系统行为，先预测再看答案</p>
 <div class="sec sec-question">
 <div class="sec-label">推演序列</div>
-<p><strong>系统</strong>：单主 L + 从库 A（滞后 200ms）+ 从库 B（滞后 5s，正在从网络抖动中恢复）。 时间轴 T=0 起，事件如下：</p>
-<p><strong>步骤 1</strong>：T=0，用户 U 把昵称从"小明"改为"大明"（写入 L，异步复制）。 L 立即向 U 确认成功。</p>
-<p><strong>步骤 2</strong>：T=100ms，U 的刷新请求被负载均衡到从库 A。 → U 看到的昵称是？（A 的滞后 200ms，此时刻 L 的 T=0 写入尚未到达 A）</p>
-<p><strong>步骤 3</strong>：T=250ms，L 的写入到达 A。U 再次刷新，这次被路由到从库 B。 → U 看到的昵称是？</p>
-<p><strong>步骤 4</strong>：T=2s，L 的写入仍未到达 B（网络抖动加剧）。 运营同事在后台把 U 的昵称又改回了"小明"（写入 L）。 U 的第三次刷新被路由到 A。</p>
+<p><strong>系统</strong>：单主 L + 从库 A（滞后 200ms）+ 从库 B（滞后 5s，正在从网络抖动中恢复）。</p>
+<p>时间轴 T=0 起，事件如下：</p>
+<p><strong>步骤 1</strong>：T=0，用户 U 把昵称从&quot;小明&quot;改为&quot;大明&quot;（写入 L，异步复制）。</p>
+<p>L 立即向 U 确认成功。</p>
+<p><strong>步骤 2</strong>：T=100ms，U 的刷新请求被负载均衡到从库 A。</p>
+<p>→ U 看到的昵称是？（A 的滞后 200ms，此时刻 L 的 T=0 写入尚未到达 A）</p>
+<p><strong>步骤 3</strong>：T=250ms，L 的写入到达 A。U 再次刷新，这次被路由到从库 B。</p>
+<p>→ U 看到的昵称是？</p>
+<p><strong>步骤 4</strong>：T=2s，L 的写入仍未到达 B（网络抖动加剧）。</p>
+<p>运营同事在后台把 U 的昵称又改回了&quot;小明&quot;（写入 L）。</p>
+<p>U 的第三次刷新被路由到 A。</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p><strong>步骤 2</strong>：<strong>旧值"小明"</strong>。写入已确认但还没复制到 A——这就是 "主库确认 ≠ 全局可见"。</p>
-<p><strong>步骤 3</strong>：仍是"小明"，而且是<strong>从更新过的 A 跳回到落后的 B</strong>。 U 会感觉自己改的东西"变了回去"，比单纯看不到更新更让人困惑。 这就是<strong>单调读</strong>要解决的问题：同一个用户的连续读不应往回走。</p>
-<p><strong>步骤 4</strong>：A 上此刻是"大明"（第一次修改已到达）， 而全局的最新值其实是"小明"（第二次修改，尚未到 A）。 U 看到了一个<strong>从未在全局存在过的状态序列</strong>： 小明 → 大明，实际上全局历史是 小明 → 大明 → 小明。 但 U 的体验是合理的，因为单调读只约束"不回退"， 不承诺看到最终状态。</p>
+<p><strong>步骤 2</strong>：<strong>旧值&quot;小明&quot;</strong>。写入已确认但还没复制到 A——这就是</p>
+<p>&quot;主库确认 ≠ 全局可见&quot;。</p>
+<p><strong>步骤 3</strong>：仍是&quot;小明&quot;，而且是<strong>从更新过的 A 跳回到落后的 B</strong>。</p>
+<p>U 会感觉自己改的东西&quot;变了回去&quot;，比单纯看不到更新更让人困惑。</p>
+<p>这就是<strong>单调读</strong>要解决的问题：同一个用户的连续读不应往回走。</p>
+<p><strong>步骤 4</strong>：A 上此刻是&quot;大明&quot;（第一次修改已到达），</p>
+<p>而全局的最新值其实是&quot;小明&quot;（第二次修改，尚未到 A）。</p>
+<p>U 看到了一个<strong>从未在全局存在过的状态序列</strong>：</p>
+<p>小明 → 大明，实际上全局历史是 小明 → 大明 → 小明。</p>
+<p>但 U 的体验是合理的，因为单调读只约束&quot;不回退&quot;，</p>
+<p>不承诺看到最终状态。</p>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
@@ -739,33 +1150,70 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">复制滞后下，用户可以经历"全局从未发生过的状态序列"；单调读只防回退，不保证最新。</div>
+<div class="takeaway">复制滞后下，用户可以经历&quot;全局从未发生过的状态序列&quot;；单调读只防回退，不保证最新。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="S-5.2-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">单调读一致性保证的是什么？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 用户总能读到全局最新值</button>
+<button class="quiz-opt" data-val="1">B. 同一用户的连续读不会看到"回退到过去"</button>
+<button class="quiz-opt" data-val="2">C. 所有用户看到相同顺序</button>
+<button class="quiz-opt" data-val="3">D. 从库滞后不超过 1 秒</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="S-5.2-01-q1" data-kind="judge" data-correct="true">
+<div class="quiz-stem">复制滞后下，用户可能看到全局从未存在过的状态组合。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-<section class="card" id="S-7.2-01">
+<section class="card" id="S-7.2-01" data-cid="S-7.2-01">
 <header class="card-head">
 <span class="badge b-simulation">⏱ 推演卡</span>
-<span class="chapter">§7 事务</span>
+<span class="head-right">
+<button class="star-btn" title="收藏">☆</button>
+<span class="read-dot" title="学习状态"></span>
+</span>
 </header>
 <h2 class="card-title">四种隔离级别下，这笔并发读取各看到什么？</h2>
 <p class="hint">逐步推演系统行为，先预测再看答案</p>
 <div class="sec sec-question">
 <div class="sec-label">推演序列</div>
-<p><strong>初始状态</strong>：账户 A 余额 100，账户 B 余额 100。 两个事务并发执行：</p>
+<p><strong>初始状态</strong>：账户 A 余额 100，账户 B 余额 100。</p>
+<p>两个事务并发执行：</p>
 <ul>
 <li><strong>T1（转账）</strong>：BEGIN → A 扣 10（A=90）→ ……尚在执行……</li>
 <li><strong>T2（统计）</strong>：BEGIN → 读 A → 读 B → COMMIT</li>
 </ul>
-<p><strong>时间轴</strong>： T1 执行了"A 扣 10"但<strong>尚未提交</strong>；T2 此刻读 A 和 B。</p>
-<p><strong>逐级推演</strong>（先自己回答再看揭示）： RU 下 T2 读到的 A、B 各是多少？ RC 下呢？RR 下呢？</p>
-<p><strong>追加时间轴</strong>：T1 继续执行 B 加 10（B=110），T1 提交。 假设 T2 是 RR 级别且<strong>在 T1 提交前就已开始</strong>，T2 此刻重读 A 和 B （再算一次总额），读到多少？</p>
+<p><strong>时间轴</strong>：</p>
+<p>T1 执行了&quot;A 扣 10&quot;但<strong>尚未提交</strong>；T2 此刻读 A 和 B。</p>
+<p><strong>逐级推演</strong>（先自己回答再看揭示）：</p>
+<p>RU 下 T2 读到的 A、B 各是多少？</p>
+<p>RC 下呢？RR 下呢？</p>
+<p><strong>追加时间轴</strong>：T1 继续执行 B 加 10（B=110），T1 提交。</p>
+<p>假设 T2 是 RR 级别且<strong>在 T1 提交前就已开始</strong>，T2 此刻重读 A 和 B</p>
+<p>（再算一次总额），读到多少？</p>
 </div>
 <div class="sec sec-reveal">
 <div class="sec-label">揭示</div>
-<p><strong>RU</strong>：A=90，B=100。<strong>读到了未提交的扣减</strong>。 如果 T1 之后回滚，T2 看到过一笔从未发生的扣款——脏读。 总额 190，既不是转账前也不是转账后，哪个都不对。</p>
-<p><strong>RC</strong>：A=100，B=100。只读已提交数据，总额 200，一致。 但注意：T1 提交后 T2 若<strong>再读一次</strong>，会看到 A=90—— 同一事务内两次读结果不同（不可重复读），RC 允许。</p>
-<p><strong>RR</strong>：A=100，B=100，且 T1 提交后重读仍是 100—— 快照固定在事务开始时刻。总额恒为 200。</p>
-<p><strong>追加推演（RR 重读）</strong>：A=90，B=100——<strong>注意 B 还是 100！</strong> T1 对 B 的写入发生在 T2 快照之后，T2 看不到。 这就是 MVCC 快照读的规则：整个事务只看"开始时刻的快照 + 自己写的"。总额算出 190？不——A=90、B=100，总额 190， 是一个<strong>全局从未存在过的状态</strong>（转账前是 200，转账后是 200）。 对报表场景这通常可接受（近似值）， 对审计场景就是事故。</p>
+<p><strong>RU</strong>：A=90，B=100。<strong>读到了未提交的扣减</strong>。</p>
+<p>如果 T1 之后回滚，T2 看到过一笔从未发生的扣款——脏读。</p>
+<p>总额 190，既不是转账前也不是转账后，哪个都不对。</p>
+<p><strong>RC</strong>：A=100，B=100。只读已提交数据，总额 200，一致。</p>
+<p>但注意：T1 提交后 T2 若<strong>再读一次</strong>，会看到 A=90——</p>
+<p>同一事务内两次读结果不同（不可重复读），RC 允许。</p>
+<p><strong>RR</strong>：A=100，B=100，且 T1 提交后重读仍是 100——</p>
+<p>快照固定在事务开始时刻。总额恒为 200。</p>
+<p><strong>追加推演（RR 重读）</strong>：A=90，B=100——<strong>注意 B 还是 100！</strong></p>
+<p>T1 对 B 的写入发生在 T2 快照之后，T2 看不到。</p>
+<p>这就是 MVCC 快照读的规则：整个事务只看&quot;开始时刻的快照 +</p>
+<p>自己写的&quot;。总额算出 190？不——A=90、B=100，总额 190，</p>
+<p>是一个<strong>全局从未存在过的状态</strong>（转账前是 200，转账后是 200）。</p>
+<p>对报表场景这通常可接受（近似值），</p>
+<p>对审计场景就是事故。</p>
 </div>
 <div class="sec sec-figure">
 <div class="sec-label">图</div>
@@ -782,10 +1230,142 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 </div>
 <div class="sec sec-takeaway">
 <div class="sec-label">记住这一句</div>
-<div class="takeaway">RU 读脏数据、RC 允许不可重复读、RR 快照固定但可能看到"全局从未存在过的组合"，Serializable 才承诺"结果等价于某种串行顺序"。</div>
+<div class="takeaway">RU 读脏数据、RC 允许不可重复读、RR 快照固定但可能看到&quot;全局从未存在过的组合&quot;，Serializable 才承诺&quot;结果等价于某种串行顺序&quot;。</div>
 </div>
+<div class="sec sec-quiz"><div class="sec-label">自测 · 巩固一下</div>
+<div class="quiz" data-qid="S-7.2-01-q0" data-kind="choice" data-correct="1">
+<div class="quiz-stem">在 RR（快照隔离）下，事务内重读看到的是？</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="0">A. 最新已提交数据</button>
+<button class="quiz-opt" data-val="1">B. 事务开始时刻的快照 + 自己的写入</button>
+<button class="quiz-opt" data-val="2">C. 始终为空</button>
+<button class="quiz-opt" data-val="3">D. 任意已提交数据</button>
+</div><div class="quiz-fb"></div></div>
+<div class="quiz" data-qid="S-7.2-01-q1" data-kind="judge" data-correct="true">
+<div class="quiz-stem">RC 级别下，同一事务内两次读取同一行可能得到不同结果。</div>
+<div class="quiz-opts">
+<button class="quiz-opt" data-val="对">对</button>
+<button class="quiz-opt" data-val="错">错</button>
+</div><div class="quiz-fb"></div></div>
+</div>
+<footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
 </section>
-  <div class="footnote">原型 · 内容自包含 · mermaid 图首次联网加载后缓存</div>
+  <div class="footnote">原型 · 状态保存在本机浏览器 · 清除浏览器数据会重置进度</div>
 </div>
+<nav class="bottom-nav">
+  <button id="nav-all" class="on">全部<span class="cnt">15</span></button>
+  <button id="nav-unread">未学<span class="cnt" id="cnt-unread">15</span></button>
+  <button id="nav-starred">收藏<span class="cnt" id="cnt-starred">0</span></button>
+</nav>
+<script>
+(function(){
+  var LS = 'ddia-cards-v1';
+  var state = { read:{}, starred:{}, quizWrong:{} };
+  try { state = Object.assign(state, JSON.parse(localStorage.getItem(LS) || '{}')); } catch(e){}
+  function save(){ localStorage.setItem(LS, JSON.stringify(state)); }
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var tocItems = {};
+  document.querySelectorAll('.toc-item').forEach(function(a){ tocItems[a.dataset.cid] = a; });
+
+  function refreshCard(el){
+    var cid = el.dataset.cid;
+    el.classList.toggle('is-read', !!state.read[cid]);
+    el.classList.toggle('is-starred', !!state.starred[cid]);
+    el.querySelector('.mark-read-btn').textContent = state.read[cid] ? '✓ 已学（点击取消）' : '✓ 标记为已学';
+    el.querySelector('.star-btn').textContent = state.starred[cid] ? '★' : '☆';
+    var t = tocItems[cid];
+    if (t) {
+      t.classList.toggle('read', !!state.read[cid]);
+      t.classList.toggle('starred', !!state.starred[cid]);
+      var s = t.querySelector('.toc-star');
+      s.textContent = '★';
+      s.classList.toggle('empty', !state.starred[cid]);
+    }
+  }
+  function refreshProgress(){
+    var total = cards.length;
+    var n = cards.filter(function(c){ return state.read[c.dataset.cid]; }).length;
+    var ns = cards.filter(function(c){ return state.starred[c.dataset.cid]; }).length;
+    document.getElementById('prog-num').textContent = n + '/' + total;
+    document.getElementById('prog-fill').style.width = (total ? 100*n/total : 0) + '%';
+    document.getElementById('cnt-unread').textContent = total - n;
+    document.getElementById('cnt-starred').textContent = ns;
+    document.getElementById('nav-all').querySelector('.cnt').textContent = total;
+  }
+  function applyFilter(mode){
+    cards.forEach(function(c){
+      var cid = c.dataset.cid, show = true;
+      if (mode === 'unread') show = !state.read[cid];
+      else if (mode === 'starred') show = !!state.starred[cid];
+      else if (mode === 'quiz-wrong') show = !!state.quizWrong[cid];
+      c.classList.toggle('hidden', !show);
+    });
+    document.querySelectorAll('#filters .chip').forEach(function(ch){
+      ch.classList.toggle('on', ch.dataset.filter === mode);
+    });
+    ['all','unread','starred'].forEach(function(id){
+      document.getElementById('nav-' + id).classList.toggle('on', id === mode);
+    });
+    window.scrollTo(0,0);
+  }
+
+  cards.forEach(function(c){
+    var cid = c.dataset.cid;
+    c.querySelector('.star-btn').addEventListener('click', function(){
+      state.starred[cid] = !state.starred[cid];
+      if (!state.starred[cid]) delete state.starred[cid];
+      save(); refreshCard(c); refreshProgress();
+    });
+    c.querySelector('.mark-read-btn').addEventListener('click', function(){
+      state.read[cid] = !state.read[cid];
+      if (!state.read[cid]) delete state.read[cid];
+      save(); refreshCard(c); refreshProgress();
+    });
+    // quiz interaction
+    c.querySelectorAll('.quiz').forEach(function(qz){
+      var correct = qz.dataset.correct;
+      var isJudge = qz.dataset.kind === 'judge';
+      qz.querySelectorAll('.quiz-opt').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          if (qz.classList.contains('answered')) return;
+          var picked = btn.dataset.val;
+          var ok = String(picked) === String(correct);
+          qz.classList.add('answered', ok ? 'right' : 'wrongq');
+          btn.classList.add('picked', ok ? 'correct' : 'wrong');
+          if (!ok) {
+            var cbtn = Array.prototype.find.call(qz.querySelectorAll('.quiz-opt'),
+              function(b){ return String(b.dataset.val) === String(correct); });
+            if (cbtn) cbtn.classList.add('correct');
+          }
+          var fb = qz.querySelector('.quiz-fb');
+          fb.textContent = ok ? '✓ 答对了' : '✗ 答错了，正确的已标出';
+          // record wrong for review filter
+          var hadWrong = state.quizWrong[cid];
+          if (!ok && !hadWrong) { state.quizWrong[cid] = true; save(); }
+          if (ok && hadWrong) {
+            // only clear if all quizzes in card answered correctly at least once
+            var allOk = Array.prototype.every.call(c.querySelectorAll('.quiz'), function(q2){
+              return q2 === qz ? ok : q2.classList.contains('right');
+            });
+            if (allOk) { delete state.quizWrong[cid]; save(); }
+          }
+          refreshCard(c);
+        });
+      });
+    });
+    refreshCard(c);
+  });
+
+  document.querySelectorAll('#filters .chip').forEach(function(ch){
+    ch.addEventListener('click', function(){ applyFilter(ch.dataset.filter); });
+  });
+  ['all','unread','starred'].forEach(function(id){
+    document.getElementById('nav-' + id).addEventListener('click', function(){ applyFilter(id); });
+  });
+
+  refreshProgress();
+})();
+</script>
 </body>
 </html>
