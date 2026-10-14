@@ -63,9 +63,9 @@ jobs:
             --source "$GITHUB_WORKSPACE" --baseURL https://c2j.github.io/ddia/
           test -f site/index.html && echo "root page OK"
           test -f site/ch6/index.html && echo "ch6 OK"
-          # 瘦身：卡片阅读只需 zh 主站与 prototype；其余语言版本/打印版/插图地图不发布
-          du -sh site
-          rm -rf site/tw site/v1 site/v1_tw site/_print site/map site/indexes site/categories site/tags site/search
+          # 阶段一：仅发布 prototype（整站发布在 Pages 端卡 updating_pages 超时，待恢复后再启用）
+          rm -rf site
+          mv prototype site
           du -sh site
 
       - uses: actions/upload-pages-artifact@v3
