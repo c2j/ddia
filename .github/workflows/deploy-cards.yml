@@ -51,8 +51,13 @@ jobs:
         run: |
           mkdir -p site
           cp -r prototype site/prototype
-          # 让卡片的 /ch6#... 链接在本站点内有效：连同 Hugo 构建产物一起发布
-          sudo apt-get update -qq && sudo apt-get install -y -qq hugo golang
+          # 安装 Hugo extended（主题 oink 要求 >=0.160.1；apt 源版本过旧不可用）
+          HUGO_VERSION=0.165.0
+          curl -sSLo /tmp/hugo.tar.gz \
+            "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz"
+          tar -xzf /tmp/hugo.tar.gz -C /tmp hugo
+          sudo mv /tmp/hugo /usr/local/bin/hugo
+          hugo version
           hugo --gc --minify --destination ../site --source . --baseURL https://c2j.github.io/ddia/
 
       - uses: actions/upload-pages-artifact@v3
