@@ -61,14 +61,21 @@ details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font
 .toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;
   border-top:1px solid var(--line); color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.5; }
 .toc-item.read .toc-title{ color:var(--sub); }
-.toc-item.read .toc-title::after{ content:" ✓"; color:var(--ok); font-weight:700; }
+.toc-item.read .toc-mark-read{ background:var(--ok); color:#fff; }
+.toc-mark-read{ flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 7px;
+  border-radius:99px; border:1px solid var(--ok); color:var(--ok); visibility:hidden; }
+.toc-mark-read,.toc-mark-wrong{ visibility:hidden; }
+.toc-item.read .toc-mark-read{ visibility:visible; background:var(--ok); color:#fff; }
+.toc-item.quizwrong .toc-mark-wrong{ visibility:visible; background:var(--bad); color:#fff; }
+.toc-mark-wrong{ flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 7px;
+  border-radius:99px; border:1px solid var(--bad); color:var(--bad); }
 .toc-dot{ flex:0 0 8px; width:8px; height:8px; border-radius:50%; }
 .toc-dot.t-dilemma{ background:var(--dilemma); }
 .toc-dot.t-simulation{ background:var(--simulation); }
 .toc-dot.t-incident{ background:var(--incident); }
-.toc-star{ flex:0 0 14px; text-align:center; color:var(--star); font-size:13px; }
+.toc-star{ flex:0 0 16px; text-align:center; color:var(--star); font-size:14px; }
 .toc-star.empty{ visibility:hidden; }
-.toc-title{ flex:1; }
+.toc-title{ flex:1; min-width:0; }
 .toc-item.starred .toc-title{ font-weight:600; }
 
 /* ---- cards ---- */
@@ -166,21 +173,21 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
   </div>
   <details class="tocbox">
     <summary>📋 卡片目录</summary>
-    <a class="toc-item t-incident" href="#I-5.1-01" data-cid="I-5.1-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.1-01"></span>事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退</a>
-<a class="toc-item t-incident" href="#I-5.4-01" data-cid="I-5.4-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.4-01"></span>事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了</a>
-<a class="toc-item t-incident" href="#I-7.2-01" data-cid="I-7.2-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-7.2-01"></span>事故档案：MySQL RR 下的丢失更新导致库存超卖</a>
-<a class="toc-item t-dilemma" href="#P-5.1-01" data-cid="P-5.1-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-01"></span>你的从库挂了，怎么恢复？</a>
-<a class="toc-item t-dilemma" href="#P-5.1-02" data-cid="P-5.1-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-02"></span>同步复制到几个副本？</a>
-<a class="toc-item t-dilemma" href="#P-5.2-01" data-cid="P-5.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-01"></span>用户改了自己的头像，刷新却还是旧的</a>
-<a class="toc-item t-dilemma" href="#P-5.2-02" data-cid="P-5.2-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-02"></span>一条评论的回复出现在了评论前面</a>
-<a class="toc-item t-dilemma" href="#P-5.3-01" data-cid="P-5.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.3-01"></span>两个数据中心都能写，冲突来了怎么办？</a>
-<a class="toc-item t-dilemma" href="#P-5.4-01" data-cid="P-5.4-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.4-01"></span>不选主库了，写入确认几份才安全？</a>
-<a class="toc-item t-dilemma" href="#P-7.2-01" data-cid="P-7.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.2-01"></span>你要为这三种业务各选哪个隔离级别？</a>
-<a class="toc-item t-dilemma" href="#P-7.3-01" data-cid="P-7.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-01"></span>值班医生系统：两个都撤销了自己的班</a>
-<a class="toc-item t-dilemma" href="#P-7.3-02" data-cid="P-7.3-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-02"></span>可串行化真的可以&quot;免费&quot;拿到吗？</a>
-<a class="toc-item t-simulation" href="#S-5.1-01" data-cid="S-5.1-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.1-01"></span>主库在确认前崩溃，这笔写入算数吗？</a>
-<a class="toc-item t-simulation" href="#S-5.2-01" data-cid="S-5.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.2-01"></span>跟踪一条数据在复制滞后期内的真实状态</a>
-<a class="toc-item t-simulation" href="#S-7.2-01" data-cid="S-7.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-7.2-01"></span>四种隔离级别下，这笔并发读取各看到什么？</a>
+    <a class="toc-item t-incident" href="#I-5.1-01" data-cid="I-5.1-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.1-01"></span><span class="toc-title">事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-incident" href="#I-5.4-01" data-cid="I-5.4-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.4-01"></span><span class="toc-title">事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-incident" href="#I-7.2-01" data-cid="I-7.2-01"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-7.2-01"></span><span class="toc-title">事故档案：MySQL RR 下的丢失更新导致库存超卖</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.1-01" data-cid="P-5.1-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-01"></span><span class="toc-title">你的从库挂了，怎么恢复？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.1-02" data-cid="P-5.1-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-02"></span><span class="toc-title">同步复制到几个副本？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.2-01" data-cid="P-5.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-01"></span><span class="toc-title">用户改了自己的头像，刷新却还是旧的</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.2-02" data-cid="P-5.2-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.2-02"></span><span class="toc-title">一条评论的回复出现在了评论前面</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.3-01" data-cid="P-5.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.3-01"></span><span class="toc-title">两个数据中心都能写，冲突来了怎么办？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-5.4-01" data-cid="P-5.4-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.4-01"></span><span class="toc-title">不选主库了，写入确认几份才安全？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-7.2-01" data-cid="P-7.2-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.2-01"></span><span class="toc-title">你要为这三种业务各选哪个隔离级别？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-7.3-01" data-cid="P-7.3-01"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-01"></span><span class="toc-title">值班医生系统：两个都撤销了自己的班</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-dilemma" href="#P-7.3-02" data-cid="P-7.3-02"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-02"></span><span class="toc-title">可串行化真的可以&quot;免费&quot;拿到吗？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-simulation" href="#S-5.1-01" data-cid="S-5.1-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.1-01"></span><span class="toc-title">主库在确认前崩溃，这笔写入算数吗？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-simulation" href="#S-5.2-01" data-cid="S-5.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.2-01"></span><span class="toc-title">跟踪一条数据在复制滞后期内的真实状态</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
+<a class="toc-item t-simulation" href="#S-7.2-01" data-cid="S-7.2-01"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-7.2-01"></span><span class="toc-title">四种隔离级别下，这笔并发读取各看到什么？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
   </details>
 <section class="card" id="I-5.1-01" data-cid="I-5.1-01">
 <header class="card-head">
@@ -1278,6 +1285,7 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
     if (t) {
       t.classList.toggle('read', !!state.read[cid]);
       t.classList.toggle('starred', !!state.starred[cid]);
+      t.classList.toggle('quizwrong', !!state.quizWrong[cid]);
       var s = t.querySelector('.toc-star');
       s.textContent = '★';
       s.classList.toggle('empty', !state.starred[cid]);

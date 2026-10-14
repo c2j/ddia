@@ -228,7 +228,9 @@ def main():
         f'<a class="toc-item t-{c["type"]}" href="#{c["id"]}" data-cid="{c["id"]}">'
         f'<span class="toc-dot t-{c["type"]}"></span>'
         f'<span class="toc-star" data-star="{c["id"]}"></span>'
-        f'{md_inline(c["title"])}</a>'
+        f'<span class="toc-title">{md_inline(c["title"])}</span>'
+        f'<span class="toc-mark-wrong">答错</span>'
+        f'<span class="toc-mark-read">已学</span></a>'
         for c in cards
     )
 
@@ -303,14 +305,21 @@ details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font
 .toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;
   border-top:1px solid var(--line); color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.5; }
 .toc-item.read .toc-title{ color:var(--sub); }
-.toc-item.read .toc-title::after{ content:" ✓"; color:var(--ok); font-weight:700; }
+.toc-item.read .toc-mark-read{ background:var(--ok); color:#fff; }
+.toc-mark-read{ flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 7px;
+  border-radius:99px; border:1px solid var(--ok); color:var(--ok); visibility:hidden; }
+.toc-mark-read,.toc-mark-wrong{ visibility:hidden; }
+.toc-item.read .toc-mark-read{ visibility:visible; background:var(--ok); color:#fff; }
+.toc-item.quizwrong .toc-mark-wrong{ visibility:visible; background:var(--bad); color:#fff; }
+.toc-mark-wrong{ flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 7px;
+  border-radius:99px; border:1px solid var(--bad); color:var(--bad); }
 .toc-dot{ flex:0 0 8px; width:8px; height:8px; border-radius:50%; }
 .toc-dot.t-dilemma{ background:var(--dilemma); }
 .toc-dot.t-simulation{ background:var(--simulation); }
 .toc-dot.t-incident{ background:var(--incident); }
-.toc-star{ flex:0 0 14px; text-align:center; color:var(--star); font-size:13px; }
+.toc-star{ flex:0 0 16px; text-align:center; color:var(--star); font-size:14px; }
 .toc-star.empty{ visibility:hidden; }
-.toc-title{ flex:1; }
+.toc-title{ flex:1; min-width:0; }
 .toc-item.starred .toc-title{ font-weight:600; }
 
 /* ---- cards ---- */
@@ -439,6 +448,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
     if (t) {
       t.classList.toggle('read', !!state.read[cid]);
       t.classList.toggle('starred', !!state.starred[cid]);
+      t.classList.toggle('quizwrong', !!state.quizWrong[cid]);
       var s = t.querySelector('.toc-star');
       s.textContent = '★';
       s.classList.toggle('empty', !state.starred[cid]);
