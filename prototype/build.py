@@ -407,7 +407,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 <body>
 <div class="wrap">
   <div class="topbar">
-    <h1>DDIA 权衡卡 · 原型 <span class="progress-num" id="prog-num">0/{{COUNT}}</span></h1>
+    <h1>DDIA 权衡卡 · 原型 <span style="display:flex;gap:10px;align-items:baseline"><span class="progress-num" id="prog-num">0/{{COUNT}}</span><button class="chip" id="top-toc-btn">📋 目录</button></span></h1>
     <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
     <div class="filter-row" id="filters">
       <button class="chip on" data-filter="all">全部</button>
@@ -427,6 +427,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
   <button id="nav-all" class="on">全部<span class="cnt">{{COUNT}}</span></button>
   <button id="nav-unread">未学<span class="cnt" id="cnt-unread">{{COUNT}}</span></button>
   <button id="nav-starred">收藏<span class="cnt" id="cnt-starred">0</span></button>
+  <button id="nav-toc">📋 目录</button>
 </nav>
 <script>
 (function(){
@@ -437,7 +438,12 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 
   var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
   var tocItems = {};
-  document.querySelectorAll('.toc-item').forEach(function(a){ tocItems[a.dataset.cid] = a; });
+  document.querySelectorAll('.toc-item').forEach(function(a){
+    tocItems[a.dataset.cid] = a;
+    a.addEventListener('click', function(){
+      document.querySelector('details.tocbox').open = false;
+    });
+  });
 
   function refreshCard(el){
     var cid = el.dataset.cid;
@@ -528,6 +534,14 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
     });
     refreshCard(c);
   });
+
+  function openToc(){
+    var box = document.querySelector('details.tocbox');
+    box.open = true;
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  document.getElementById('nav-toc').addEventListener('click', openToc);
+  document.getElementById('top-toc-btn').addEventListener('click', openToc);
 
   document.querySelectorAll('#filters .chip').forEach(function(ch){
     ch.addEventListener('click', function(){ applyFilter(ch.dataset.filter); });
