@@ -242,7 +242,7 @@ def main():
     for (key, label), cs in groups.items():
         toc_parts.append(
             f'<div class="toc-group" data-group="{key}">'
-            f'<div class="toc-group-h"><span>{label}</span>'
+            f'<div class="toc-group-h"><span class="toc-arrow">▼</span><span>{label}</span>'
             f'<span class="g-cnt">{len(cs)} 张</span></div>')
         for c in cs:
             ch = c.get("chapter", "")
@@ -331,16 +331,25 @@ body{ margin:0; background:var(--bg); color:var(--ink);
 
 details.tocbox{ border:1px solid var(--line); border-radius:10px;
   background:var(--card); margin:10px 0 18px; }
-details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px; }
+details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px;
+  list-style:none; display:flex; align-items:center; gap:8px; }
+details.tocbox summary::-webkit-details-marker{ display:none; }
+details.tocbox summary::before{ content:"▼"; font-size:10px; color:var(--sub);
+  transition:transform .25s ease; display:inline-block; }
+details.tocbox[open] summary::before{ transform:rotate(0deg); }
+details.tocbox:not([open]) summary::before{ transform:rotate(-90deg); }
 .toc-search{ padding:10px 14px 4px; }
 .toc-search input{ width:100%; font-size:15px; padding:9px 12px; border-radius:9px;
   border:1px solid var(--line); background:var(--bg); color:var(--ink); outline:none;
   font-family:inherit; }
 .toc-search input:focus{ border-color:var(--accent); }
 .toc-group{ margin-top:6px; }
-.toc-group-h{ display:flex; align-items:center; justify-content:space-between;
+.toc-group-h{ display:flex; align-items:center; gap:6px;
   padding:9px 14px 5px; font-size:12.5px; font-weight:700; color:var(--sub);
   cursor:pointer; user-select:none; }
+.toc-arrow{ flex:0 0 auto; display:inline-block; font-size:10px; color:var(--sub);
+  transition:transform .25s ease; transform-origin:center; }
+.toc-group.closed .toc-arrow{ transform:rotate(-90deg); }
 .toc-group-h .g-cnt{ font-weight:600; font-size:11.5px; color:var(--sub); }
 .toc-group.closed .toc-item{ display:none; }
 .toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;

@@ -63,16 +63,25 @@ body{ margin:0; background:var(--bg); color:var(--ink);
 
 details.tocbox{ border:1px solid var(--line); border-radius:10px;
   background:var(--card); margin:10px 0 18px; }
-details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px; }
+details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px;
+  list-style:none; display:flex; align-items:center; gap:8px; }
+details.tocbox summary::-webkit-details-marker{ display:none; }
+details.tocbox summary::before{ content:"▼"; font-size:10px; color:var(--sub);
+  transition:transform .25s ease; display:inline-block; }
+details.tocbox[open] summary::before{ transform:rotate(0deg); }
+details.tocbox:not([open]) summary::before{ transform:rotate(-90deg); }
 .toc-search{ padding:10px 14px 4px; }
 .toc-search input{ width:100%; font-size:15px; padding:9px 12px; border-radius:9px;
   border:1px solid var(--line); background:var(--bg); color:var(--ink); outline:none;
   font-family:inherit; }
 .toc-search input:focus{ border-color:var(--accent); }
 .toc-group{ margin-top:6px; }
-.toc-group-h{ display:flex; align-items:center; justify-content:space-between;
+.toc-group-h{ display:flex; align-items:center; gap:6px;
   padding:9px 14px 5px; font-size:12.5px; font-weight:700; color:var(--sub);
   cursor:pointer; user-select:none; }
+.toc-arrow{ flex:0 0 auto; display:inline-block; font-size:10px; color:var(--sub);
+  transition:transform .25s ease; transform-origin:center; }
+.toc-group.closed .toc-arrow{ transform:rotate(-90deg); }
 .toc-group-h .g-cnt{ font-weight:600; font-size:11.5px; color:var(--sub); }
 .toc-group.closed .toc-item{ display:none; }
 .toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;
@@ -193,7 +202,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
   <details class="tocbox">
     <summary>📋 卡片目录</summary>
     <div class="toc-search"><input id="toc-search" type="search" placeholder="🔍 搜索卡片标题、章节、关键词…" autocomplete="off"></div>
-<div class="toc-group" data-group="§5"><div class="toc-group-h"><span>第5章 复制</span><span class="g-cnt">10 张</span></div>
+<div class="toc-group" data-group="§5"><div class="toc-group-h"><span class="toc-arrow">▼</span><span>第5章 复制</span><span class="g-cnt">10 张</span></div>
 <a class="toc-item t-incident" href="#I-5.1-01" data-cid="I-5.1-01" data-text="I-5.1-01 事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退 §5.1 领导者与追随者"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.1-01"></span><span class="toc-title">事故档案：MongoDB 旧主库&quot;复活&quot;导致数据回退</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 <a class="toc-item t-incident" href="#I-5.4-01" data-cid="I-5.4-01" data-text="I-5.4-01 事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了 §5.4 无主复制"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-5.4-01"></span><span class="toc-title">事故档案：Riak 集群&quot;幽灵 resurrect&quot;，被删除的数据回来了</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 <a class="toc-item t-dilemma" href="#P-5.1-01" data-cid="P-5.1-01" data-text="P-5.1-01 你的从库挂了，怎么恢复？ §5.1 领导者与追随者"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-5.1-01"></span><span class="toc-title">你的从库挂了，怎么恢复？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
@@ -205,7 +214,7 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 <a class="toc-item t-simulation" href="#S-5.1-01" data-cid="S-5.1-01" data-text="S-5.1-01 主库在确认前崩溃，这笔写入算数吗？ §5.1 领导者与追随者"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.1-01"></span><span class="toc-title">主库在确认前崩溃，这笔写入算数吗？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 <a class="toc-item t-simulation" href="#S-5.2-01" data-cid="S-5.2-01" data-text="S-5.2-01 跟踪一条数据在复制滞后期内的真实状态 §5.2 复制滞后问题"><span class="toc-dot t-simulation"></span><span class="toc-star" data-star="S-5.2-01"></span><span class="toc-title">跟踪一条数据在复制滞后期内的真实状态</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 </div>
-<div class="toc-group" data-group="§7"><div class="toc-group-h"><span>第7章 事务</span><span class="g-cnt">5 张</span></div>
+<div class="toc-group" data-group="§7"><div class="toc-group-h"><span class="toc-arrow">▼</span><span>第7章 事务</span><span class="g-cnt">5 张</span></div>
 <a class="toc-item t-incident" href="#I-7.2-01" data-cid="I-7.2-01" data-text="I-7.2-01 事故档案：MySQL RR 下的丢失更新导致库存超卖 §7 事务"><span class="toc-dot t-incident"></span><span class="toc-star" data-star="I-7.2-01"></span><span class="toc-title">事故档案：MySQL RR 下的丢失更新导致库存超卖</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 <a class="toc-item t-dilemma" href="#P-7.2-01" data-cid="P-7.2-01" data-text="P-7.2-01 你要为这三种业务各选哪个隔离级别？ §7 事务（四种隔离级别总览）"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.2-01"></span><span class="toc-title">你要为这三种业务各选哪个隔离级别？</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
 <a class="toc-item t-dilemma" href="#P-7.3-01" data-cid="P-7.3-01" data-text="P-7.3-01 值班医生系统：两个都撤销了自己的班 §7 事务"><span class="toc-dot t-dilemma"></span><span class="toc-star" data-star="P-7.3-01"></span><span class="toc-title">值班医生系统：两个都撤销了自己的班</span><span class="toc-mark-wrong">答错</span><span class="toc-mark-read">已学</span></a>
