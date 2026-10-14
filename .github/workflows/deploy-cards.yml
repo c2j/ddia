@@ -63,18 +63,26 @@ jobs:
             --source "$GITHUB_WORKSPACE" --baseURL https://c2j.github.io/ddia/
           test -f site/index.html && echo "root page OK"
           test -f site/ch6/index.html && echo "ch6 OK"
+          # 瘦身：卡片阅读只需 zh 主站与 prototype；其余语言版本/打印版/插图地图不发布
+          du -sh site
+          rm -rf site/tw site/v1 site/v1_tw site/_print site/map site/indexes site/categories site/tags site/search
+          du -sh site
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+          retention-days: 1
 
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: https://c2j.github.io/ddia/
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
