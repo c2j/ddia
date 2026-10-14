@@ -208,6 +208,16 @@ def render_card(card: dict) -> str:
             out.append(render_section(content))
         out.append("</div>")
     out.append(render_quiz(card["id"], card["quiz"]))
+    src = card.get("source", "")
+    if src:
+        # 站点链接（Hugo Pages）+ 本地原书 md 锚点（file 预览时用）
+        ch_file = src.split("#")[0].replace("/ch", "ch") + ".md"
+        local = f"../../content/zh/{ch_file}"
+        anchor = src.split("#", 1)[1] if "#" in src else ""
+        out.append(
+            f'<footer class="card-foot card-src">'
+            f'<a class="src-link" href="{src}">📖 进阶阅读 · 原书对应小节</a>'
+            f"</footer>")
     out.append(
         f'<footer class="card-foot">'
         f'<button class="mark-read-btn">✓ 标记为已学</button>'
@@ -436,7 +446,10 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 
 /* ---- footer buttons ---- */
 .card-foot{ margin-top:16px; padding-top:12px; border-top:1px solid var(--line);
-  display:flex; justify-content:flex-end; }
+  display:flex; justify-content:space-between; align-items:center; }
+.card-src{ font-size:13.5px; }
+.src-link{ color:var(--accent); text-decoration:none; font-weight:600; }
+.src-link:active{ opacity:.6; }
 .mark-read-btn{ font-size:13.5px; font-weight:600; padding:8px 16px; border-radius:99px;
   border:1.5px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer;
   font-family:inherit; }
