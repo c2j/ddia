@@ -157,12 +157,13 @@ def render_quiz(card_id: str, quizzes: list) -> str:
         qid = f"{card_id}-q{qi}"
         if q["kind"] == "judge":
             correct = q["answer"].startswith("对") or q["answer"].lower() in ("true", "√")
-            opts = [("对", correct), ("错", not correct)]
-            out.append(f'<div class="quiz" data-qid="{qid}" data-kind="judge" data-correct="{str(correct).lower()}">')
+            ans_str = "true" if correct else "false"
+            opts = [("对", "true"), ("错", "false")]
+            out.append(f'<div class="quiz" data-qid="{qid}" data-kind="judge" data-correct="{ans_str}">')
             out.append(f'<div class="quiz-stem">{md_inline(q["stem"])}</div>')
             out.append('<div class="quiz-opts">')
-            for text, _ in opts:
-                out.append(f'<button class="quiz-opt" data-val="{text}">{text}</button>')
+            for text, val in opts:
+                out.append(f'<button class="quiz-opt" data-val="{val}">{text}</button>')
             out.append('</div><div class="quiz-fb"></div></div>')
         else:
             letters = "ABCDEF"

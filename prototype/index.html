@@ -253,8 +253,8 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 <div class="quiz" data-qid="I-5.1-01-q1" data-kind="judge" data-correct="true">
 <div class="quiz-stem">异步复制下，旧主库崩溃前未复制的写入处于&quot;不确定区&quot;，可能在新主库上消失。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -336,8 +336,8 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
 <div class="quiz" data-qid="I-5.4-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">节点长时间离线后回归，直接信任其本地数据继续提供服务是安全的。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -428,8 +428,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="I-7.2-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">RR 隔离级别保证了事务的完全安全。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -477,8 +477,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.1-01-q0" data-kind="judge" data-correct="false">
 <div class="quiz-stem">从库断电重启后，只要主库日志还在，就一定能通过重放日志追上主库。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 <div class="quiz" data-qid="P-5.1-01-q1" data-kind="choice" data-correct="0">
 <div class="quiz-stem">从库追赶的&quot;快照+日志&quot;方案中，最容易出现问题的环节是什么？</div>
@@ -553,8 +553,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.1-02-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">全同步复制（所有从库确认）比半同步更安全，因此是生产系统推荐的默认选择。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -605,8 +605,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.2-01-q0" data-kind="judge" data-correct="false">
 <div class="quiz-stem">&quot;改完之后 N 秒内读主库&quot;是精确可靠的读己之写方案。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 <div class="quiz" data-qid="P-5.2-01-q1" data-kind="choice" data-correct="0">
 <div class="quiz-stem">用户在手机上改了资料，在电脑上看不到更新，最可能的原因是什么？</div>
@@ -670,8 +670,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.2-02-q0" data-kind="judge" data-correct="false">
 <div class="quiz-stem">为了保证正确性，所有评论列表都必须实现一致前缀读。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 <div class="quiz" data-qid="P-5.2-02-q1" data-kind="choice" data-correct="1">
 <div class="quiz-stem">以下哪种数据倒序最需要修复？</div>
@@ -746,8 +746,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.3-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">LWW 是大多数场景下最可靠的冲突解决方式。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -797,7 +797,7 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">图</div>
 <p>w + r &gt; n 的交集保证，以及它为什么不是充分条件：</p>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB
-    subgraph n=5 副本
+    subgraph N5["n=5 副本"]
         W2["写入集合 w=3<br>（n1 n2 n3 收到新值）"] --- R2["读取集合 r=3<br>（本轮读到 n3 n4 n5）"]
     end
     W2 --- X["交集 n3<br>至少一个副本有新值 ✓"]
@@ -812,8 +812,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-5.4-01-q0" data-kind="judge" data-correct="false">
 <div class="quiz-stem">只要配置满足 w + r &gt; n，读到的就一定是全局最新的值。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 <div class="quiz" data-qid="P-5.4-01-q1" data-kind="choice" data-correct="1">
 <div class="quiz-stem">n=5 时，以下哪组配置满足法定人数条件？</div>
@@ -875,7 +875,7 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">图</div>
 <p>各隔离级别防哪些异常（●防护 / ○不防）：</p>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart LR
-    subgraph 防护矩阵
+    subgraph M["防护矩阵"]
         A["RU<br>脏读 ○"] --> B["RC<br>脏读 ●<br>不可重复读 ○"]
         B --> C["RR（快照隔离）<br>不可重复读 ●<br>丢失更新 ○ / 写偏差 ○"]
         C --> D["可串行化<br>全部异常 ●"]
@@ -898,8 +898,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-7.2-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">隔离级别越高越好，生产系统应默认使用可串行化。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -966,8 +966,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-7.3-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">快照隔离（RR）能防止写偏差。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -1044,8 +1044,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="P-7.3-02-q1" data-kind="judge" data-correct="true">
 <div class="quiz-stem">SSI 下无冲突的事务几乎零额外开销。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -1100,8 +1100,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="S-5.1-01-q1" data-kind="judge" data-correct="false">
 <div class="quiz-stem">只要主库在崩溃前把写入复制给了至少一个从库，客户端重试就一定是安全的。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -1148,11 +1148,11 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">图</div>
 <p>两个从库的复制滞后与用户请求路由：</p>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart LR
-    subgraph 时间轴 T=0 到 2s
+    subgraph T["时间轴 T=0 到 2s"]
         W["T=0<br>U 改名: 小明→大明<br>L 确认"] --> R1["T=100ms<br>刷新→A<br>看到: 小明"] --> R2["T=250ms<br>写入到达A<br>刷新→B<br>看到: 小明（回退感）"] --> R3["T=2s<br>运营改回小明<br>刷新→A<br>看到: 大明（过期）"]
     end
-    L[主库 L] -.200ms.-> A[从库 A]
-    L -.5s，网络抖动中.-> B[从库 B]
+    L[主库 L] -. "200ms" .-> A[从库 A]
+    L -. "5s，网络抖动中" .-> B[从库 B]
 </pre></div>
 </div>
 <div class="sec sec-takeaway">
@@ -1171,8 +1171,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="S-5.2-01-q1" data-kind="judge" data-correct="true">
 <div class="quiz-stem">复制滞后下，用户可能看到全局从未存在过的状态组合。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
@@ -1226,7 +1226,7 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="sec-label">图</div>
 <p>推演的时间轴与各隔离级别的可见性：</p>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart LR
-    subgraph 时间轴
+    subgraph TL["时间轴"]
         T0["T2 BEGIN<br>（RR 快照建立）"] --> T1["T1: A=90（未提交）<br>T2 读 A,B"] --> T2["T1: B=110<br>T1 提交"] --> T3["T2 重读 A,B"]
     end
     T1 --> RU["RU: A=90, B=100<br>读到脏数据"]
@@ -1251,8 +1251,8 @@ UPDATE items SET stock = stock - 1 WHERE id = 1;  -- 各扣 1
 <div class="quiz" data-qid="S-7.2-01-q1" data-kind="judge" data-correct="true">
 <div class="quiz-stem">RC 级别下，同一事务内两次读取同一行可能得到不同结果。</div>
 <div class="quiz-opts">
-<button class="quiz-opt" data-val="对">对</button>
-<button class="quiz-opt" data-val="错">错</button>
+<button class="quiz-opt" data-val="true">对</button>
+<button class="quiz-opt" data-val="false">错</button>
 </div><div class="quiz-fb"></div></div>
 </div>
 <footer class="card-foot"><button class="mark-read-btn">✓ 标记为已学</button></footer>
