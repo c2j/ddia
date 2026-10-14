@@ -225,15 +225,38 @@ def main():
     cards.sort(key=lambda c: c["id"])
     cards_html = "\n".join(render_card(c) for c in cards)
 
-    toc = "\n".join(
-        f'<a class="toc-item t-{c["type"]}" href="#{c["id"]}" data-cid="{c["id"]}">'
-        f'<span class="toc-dot t-{c["type"]}"></span>'
-        f'<span class="toc-star" data-star="{c["id"]}"></span>'
-        f'<span class="toc-title">{md_inline(c["title"])}</span>'
-        f'<span class="toc-mark-wrong">答错</span>'
-        f'<span class="toc-mark-read">已学</span></a>'
-        for c in cards
-    )
+    # group cards by chapter (extract leading §N)
+    import collections
+    groups = collections.OrderedDict()
+    for c in cards:
+        ch = c.get("chapter", "其他")
+        m = re.match(r"§(\d+)", ch)
+        key = f"§{m.group(1)}" if m else "其他"
+        # 章标题映射
+        ch_names = {"5": "第5章 复制", "7": "第7章 事务"}
+        label = ch_names.get(m.group(1) if m else "", ch.split("（")[0]) if m else ch
+        groups.setdefault((key, label), []).append(c)
+
+    toc_parts = ['<div class="toc-search"><input id="toc-search" type="search" '
+                 'placeholder="🔍 搜索卡片标题、章节、关键词…" autocomplete="off"></div>']
+    for (key, label), cs in groups.items():
+        toc_parts.append(
+            f'<div class="toc-group" data-group="{key}">'
+            f'<div class="toc-group-h"><span>{label}</span>'
+            f'<span class="g-cnt">{len(cs)} 张</span></div>')
+        for c in cs:
+            ch = c.get("chapter", "")
+            searchable = htmllib.escape(f'{c["id"]} {c["title"]} {ch}')
+            toc_parts.append(
+                f'<a class="toc-item t-{c["type"]}" href="#{c["id"]}" data-cid="{c["id"]}" '
+                f'data-text="{searchable}">'
+                f'<span class="toc-dot t-{c["type"]}"></span>'
+                f'<span class="toc-star" data-star="{c["id"]}"></span>'
+                f'<span class="toc-title">{md_inline(c["title"])}</span>'
+                f'<span class="toc-mark-wrong">答错</span>'
+                f'<span class="toc-mark-read">已学</span></a>')
+        toc_parts.append("</div>")
+    toc = "\n".join(toc_parts)
 
     page = (TEMPLATE
             .replace("{{CARDS}}", cards_html)
@@ -309,8 +332,21 @@ body{ margin:0; background:var(--bg); color:var(--ink);
 details.tocbox{ border:1px solid var(--line); border-radius:10px;
   background:var(--card); margin:10px 0 18px; }
 details.tocbox summary{ padding:10px 14px; cursor:pointer; font-weight:600; font-size:14px; }
+.toc-search{ padding:10px 14px 4px; }
+.toc-search input{ width:100%; font-size:15px; padding:9px 12px; border-radius:9px;
+  border:1px solid var(--line); background:var(--bg); color:var(--ink); outline:none;
+  font-family:inherit; }
+.toc-search input:focus{ border-color:var(--accent); }
+.toc-group{ margin-top:6px; }
+.toc-group-h{ display:flex; align-items:center; justify-content:space-between;
+  padding:9px 14px 5px; font-size:12.5px; font-weight:700; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.toc-group-h .g-cnt{ font-weight:600; font-size:11.5px; color:var(--sub); }
+.toc-group.closed .toc-item{ display:none; }
 .toc-item{ display:flex; align-items:center; gap:8px; padding:7px 14px;
   border-top:1px solid var(--line); color:var(--ink); text-decoration:none; font-size:13.5px; line-height:1.5; }
+.toc-item mark{ background:color-mix(in srgb, var(--star) 45%, transparent);
+  color:inherit; border-radius:3px; padding:0 1px; }
 .toc-item.read .toc-title{ color:var(--sub); }
 .toc-item.read .toc-mark-read{ background:var(--ok); color:#fff; }
 .toc-mark-read{ flex:0 0 auto; font-size:10px; font-weight:700; padding:1px 7px;
@@ -545,9 +581,35 @@ pre.mermaid{ margin:0; display:flex; justify-content:center; }
     var box = document.querySelector('details.tocbox');
     box.open = true;
     box.scrollIntoView({behavior:'smooth', block:'start'});
+    var inp = document.getElementById('toc-search');
+    if (inp && window.innerWidth < 700) setTimeout(function(){ inp.focus(); }, 350);
   }
   document.getElementById('nav-toc').addEventListener('click', openToc);
   document.getElementById('top-toc-btn').addEventListener('click', openToc);
+
+  // ---- toc: search + group collapse ----
+  var searchInput = document.getElementById('toc-search');
+  var tocGroups = Array.prototype.slice.call(document.querySelectorAll('.toc-group'));
+  document.querySelectorAll('.toc-group-h').forEach(function(h){
+    h.addEventListener('click', function(){
+      h.parentElement.classList.toggle('closed');
+    });
+  });
+  if (searchInput) {
+    searchInput.addEventListener('input', function(){
+      var kw = searchInput.value.trim().toLowerCase();
+      tocGroups.forEach(function(g){
+        var any = false;
+        g.querySelectorAll('.toc-item').forEach(function(a){
+          var hit = !kw || a.dataset.text.toLowerCase().indexOf(kw) !== -1;
+          a.style.display = hit ? '' : 'none';
+          if (hit) any = true;
+        });
+        g.style.display = any ? '' : 'none';
+        if (kw) g.classList.remove('closed');  // search expands all groups
+      });
+    });
+  }
 
   document.querySelectorAll('#filters .chip').forEach(function(ch){
     ch.addEventListener('click', function(){ applyFilter(ch.dataset.filter); });
