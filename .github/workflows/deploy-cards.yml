@@ -63,10 +63,16 @@ jobs:
             --source "$GITHUB_WORKSPACE" --baseURL https://c2j.github.io/ddia/
           test -f site/index.html && echo "root page OK"
           test -f site/ch6/index.html && echo "ch6 OK"
-          # 阶段一：仅发布 prototype（整站发布在 Pages 端卡 updating_pages 超时，待恢复后再启用）
-          rm -rf site
-          mv prototype site
+          # prototype 与裁剪版 zh 主站合并发布。
+          # 此前整站（64M）部署在 Pages 端持续卡 updating_pages 超时；
+          # 裁剪掉多语言版本/打印版/章节地图/多语言搜索索引后约 19M，部署正常。
           du -sh site
+          rm -rf site/tw site/v1 site/v1_tw site/_print site/map                   site/indexes site/categories site/tags site/search
+          rm -f site/offline-search-index.tw.*.json                 site/offline-search-index.v1.*.json                 site/offline-search-index.v1_tw.*.json
+          # prototype 挂到 /prototype/ 子路径
+          rm -rf site/prototype && cp -r prototype site/prototype
+          du -sh site
+          test -f site/index.html && test -f site/ch6/index.html && test -f site/prototype/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
