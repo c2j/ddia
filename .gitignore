@@ -12,3 +12,6 @@ content/cn/
 zh.md
 en.md
 resources/_gen/
+
+# 本地虚拟环境
+.venv/
