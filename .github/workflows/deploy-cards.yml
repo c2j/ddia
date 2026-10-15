@@ -32,8 +32,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate cards
-        run: python cards/check.py
+      - name: Validate cards (含产物漂移检查)
+        run: make cards-check
 
       - name: Build cards HTML
         run: python cards/build.py

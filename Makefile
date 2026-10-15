@@ -1,8 +1,10 @@
 OINK_MODULE := github.com/pgsty/oink
 OINK_LOCAL := $(HOME)/pgsty/oink
 
-# 学习卡的构建产物（Hugo 会原样发布到 /cards/）
-CARDS_OUT := static/cards/index.html
+# 学习卡的构建配置：产物为 cards/index.html，站内链接按 /ddia 前缀
+# （本仓库以独立子路径发布；上游 Vonng/ddia 用 static/cards/ + 站点根路径）
+CARDS_OUT := cards/index.html
+CARDS_SITE_BASE := /ddia
 
 default: dev
 
@@ -24,17 +26,17 @@ build:
 	hugo build
 
 cards:
-	CARDS_OUT=$(CARDS_OUT) SITE_BASE= python3 cards/build.py
+	CARDS_OUT=$(CARDS_OUT) SITE_BASE=$(CARDS_SITE_BASE) python3 cards/build.py
 
 # 卡片是源（cards/src/*.md）渲染出的单文件产物；这里校验内容与产物都没有漂移。
 cards-check:
 	PYTHONDONTWRITEBYTECODE=1 python3 cards/check.py
 	@tmp=$$(mktemp -d); \
-	CARDS_OUT=$$tmp/index.html SITE_BASE= python3 cards/build.py >/dev/null; \
+	CARDS_OUT=$$tmp/index.html SITE_BASE=$(CARDS_SITE_BASE) python3 cards/build.py >/dev/null; \
 	if cmp -s $(CARDS_OUT) $$tmp/index.html; then \
-		echo "✓ static/cards/index.html 与卡片源一致"; \
+		echo "✓ $(CARDS_OUT) 与卡片源一致"; \
 	else \
-		echo "✗ static/cards/index.html 与卡片源不一致，请运行 make cards 重新生成"; \
+		echo "✗ $(CARDS_OUT) 与卡片源不一致，请运行 make cards 重新生成"; \
 		rm -rf $$tmp; exit 1; \
 	fi; \
 	rm -rf $$tmp

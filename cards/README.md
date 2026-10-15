@@ -81,9 +81,13 @@ flowchart TB
 仓库根目录提供了 Makefile 目标（推荐用这两个）：
 
 ```bash
-make cards         # 由 cards/src/*.md 重新生成 static/cards/index.html
+make cards         # 由 cards/src/*.md 重新生成产物
 make cards-check   # 校验卡片内容，并确认产物与源一致（无漂移）
 ```
+
+本仓库（c2j/ddia）产物为 `cards/index.html`、链接按 `/ddia` 前缀；
+若并入主站（如上游 Vonng/ddia），产物写 `static/cards/index.html`、链接用站点根路径。
+两种形态都由 `Makefile` 里的 `CARDS_OUT` / `CARDS_SITE_BASE` 控制。
 
 `make check` 已包含 `cards-check`，CI（`.github/workflows/cards.yml`）也会在
 卡片、章节或 Makefile 变更时执行校验。产物漂移检查的含义是：
