@@ -10,6 +10,7 @@
 import html as htmllib
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 CARD_DIR = Path(__file__).parent / "src"
@@ -62,6 +63,11 @@ def parse_card(text: str) -> dict:
             quizzes.append({"kind": "choice", "stem": segs[0],
                             "options": segs[1:]})
     meta["quiz"] = quizzes
+    # 首个原文关联锚点（用于目录展示小节名；此处记录，避免渲染时区块被 pop 后丢失）
+    refs = sections.get("原文关联", "")
+    am = re.search(r"\(/ch(\d+)/#([A-Za-z0-9_-]+)\)", refs)
+    meta["ref_chapter"] = int(am.group(1)) if am else None
+    meta["ref_anchor"] = am.group(2) if am else None
     return meta
 
 
@@ -239,37 +245,70 @@ def main():
     cards.sort(key=lambda c: c["id"])
     cards_html = "\n".join(render_card(c) for c in cards)
 
-    # group cards by chapter (extract leading §N.M)
-    import collections
-    groups = collections.OrderedDict()
+    # ---- 全书章节标题与小节标题：从源 Markdown 读取，避免手写映射漂移 ----
+    CONTENT_DIR = Path(__file__).resolve().parent.parent / "content" / "zh"
 
-    def ch_sort_key(c):
+    @lru_cache(maxsize=None)
+    def chapter_title(n):
+        """返回第 n 章标题（如 '复制'），读自 content/zh/chN.md 的 frontmatter。"""
+        f = CONTENT_DIR / f"ch{n}.md"
+        if not f.exists():
+            return None
+        for line in f.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"title:\s*(.+?)\s*$", line)
+            if m:
+                return m.group(1).strip().strip('"\'')
+        return None
+
+    @lru_cache(maxsize=None)
+    def section_titles(n):
+        """返回第 n 章 anchor -> 小节标题 的映射（各级标题）。"""
+        f = CONTENT_DIR / f"ch{n}.md"
+        if not f.exists():
+            return {}
+        out = {}
+        for line in f.read_text(encoding="utf-8").splitlines():
+            m = re.match(r"^(#{2,4})\s+(.*?)\s*\{#([A-Za-z0-9_-]+)\}\s*$", line)
+            if m:
+                title = re.sub(r"`", "", m.group(2)).strip()
+                out[m.group(3)] = title
+        return out
+
+    def card_chapter_no(c):
+        m = re.match(r"§(\d+)", c.get("chapter", ""))
+        return int(m.group(1)) if m else None
+
+    def card_section_tag(c):
+        """条目上的小节标签：优先用卡片首个原文关联锚点对应的小节标题。"""
+        no = card_chapter_no(c)
+        if no is None:
+            return ""
+        # 优先用卡片首个原文关联锚点对应的小节标题（解析阶段已记录）
+        anchor = c.get("ref_anchor")
+        if anchor:
+            t = section_titles(c.get("ref_chapter") or no).get(anchor)
+            if t:
+                return t
+        # 回退：用 chapter 字段里的 §N.M
+        m2 = re.match(r"§(\d+)\.(\d+)", c.get("chapter", ""))
+        return f"§{m2.group(1)}.{m2.group(2)}" if m2 else ""
+
+    def toc_sort_key(c):
         m = re.match(r"§(\d+)(?:\.(\d+))?", c.get("chapter", ""))
         if not m:
             return (999, 99, c["id"])
         return (int(m.group(1)), int(m.group(2) or 0), c["id"])
 
-    ch_names = {
-        "1": "第1章 数据系统架构中的权衡",
-        "2": "第2章 定义非功能性需求",
-        "3": "第3章 数据模型与查询语言",
-        "4": "第4章 存储与检索",
-        "5": "第5章 编码与演化",
-        "6": "第6章 复制",
-        "7": "第7章 分片",
-        "8": "第8章 事务",
-        "9": "第9章 一致性与共识",
-    }
-    for c in sorted(cards, key=ch_sort_key):
-        ch = c.get("chapter", "其他")
-        m = re.match(r"§(\d+)(?:\.(\d+))?", ch)
-        if m:
-            num, sub = m.group(1), m.group(2)
-            key = f"§{num}.{sub}" if sub else f"§{num}"
-            label = (ch_names.get(num, ch.split("（")[0])
-                     + (f" · §{num}.{sub}" if sub else ""))
+    import collections
+    groups = collections.OrderedDict()
+    for c in sorted(cards, key=toc_sort_key):
+        no = card_chapter_no(c)
+        if no is None:
+            key, label = "其他", c.get("chapter", "其他")
         else:
-            key, label = "其他", ch
+            key = f"§{no}"
+            name = chapter_title(no)
+            label = f"第{no}章 {name}" if name else f"第{no}章"
         groups.setdefault((key, label), []).append(c)
 
     toc_parts = ['<div class="toc-search"><input id="toc-search" type="search" '
@@ -281,13 +320,17 @@ def main():
             f'<span class="g-cnt">{len(cs)} 张</span></div>')
         for c in cs:
             ch = c.get("chapter", "")
-            searchable = htmllib.escape(f'{c["id"]} {c["title"]} {ch}')
+            sec = card_section_tag(c)
+            searchable = htmllib.escape(f'{c["id"]} {c["title"]} {ch} {sec}')
+            sec_html = (f'<span class="toc-sec">{md_inline(sec)}</span>'
+                        if sec else "")
             toc_parts.append(
                 f'<a class="toc-item t-{c["type"]}" href="#{c["id"]}" data-cid="{c["id"]}" '
                 f'data-text="{searchable}">'
                 f'<span class="toc-dot t-{c["type"]}"></span>'
                 f'<span class="toc-star" data-star="{c["id"]}"></span>'
                 f'<span class="toc-title">{md_inline(c["title"])}</span>'
+                f'{sec_html}'
                 f'<span class="toc-mark-wrong">答错</span>'
                 f'<span class="toc-mark-read">已学</span></a>')
         toc_parts.append("</div>")
@@ -407,6 +450,7 @@ details.tocbox:not([open]) summary::before{ transform:rotate(-90deg); }
 .toc-star{ flex:0 0 16px; text-align:center; color:var(--star); font-size:14px; }
 .toc-star.empty{ visibility:hidden; }
 .toc-title{ flex:1; min-width:0; }
+.toc-sec{ flex:none; font-size:11px; color:var(--sub); opacity:.85; white-space:nowrap; max-width:38%; overflow:hidden; text-overflow:ellipsis; }
 .toc-item.starred .toc-title{ font-weight:600; }
 
 /* ---- cards ---- */
