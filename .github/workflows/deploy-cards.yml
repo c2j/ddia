@@ -32,6 +32,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Validate cards
+        run: python cards/check.py
+
       - name: Build cards HTML
         run: python cards/build.py
 
