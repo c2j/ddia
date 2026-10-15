@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把 cards/ch5-cards/ 下的卡片 Markdown 渲染成单文件手机可读 HTML。
+"""把 cards/src/ 下的卡片 Markdown 渲染成单文件手机可读 HTML。
 
 用法：python3 build.py
 输出：cards/index.html（自包含，mermaid 走 CDN，首次在线加载后浏览器缓存）
@@ -12,7 +12,7 @@ import re
 import sys
 from pathlib import Path
 
-CARD_DIR = Path(__file__).parent / "ch5-cards"
+CARD_DIR = Path(__file__).parent / "src"
 OUT = Path(__file__).parent / "index.html"
 # 站点部署子路径（Pages 为 repo site：/ddia/）。可用环境变量 SITE_BASE 覆盖
 import os
