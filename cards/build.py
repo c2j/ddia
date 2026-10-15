@@ -14,9 +14,12 @@ from functools import lru_cache
 from pathlib import Path
 
 CARD_DIR = Path(__file__).parent / "src"
-OUT = Path(__file__).parent / "index.html"
-# 站点部署子路径（Pages 为 repo site：/ddia/）。可用环境变量 SITE_BASE 覆盖
+# 输出路径：默认 cards/index.html；可用环境变量 CARDS_OUT 覆盖
+# （例如把产物直接写进 Hugo 的 static/ 目录，随站点发布）
 import os
+OUT = Path(os.environ.get("CARDS_OUT", Path(__file__).parent / "index.html"))
+# 站点部署子路径（Pages 为 repo site：/ddia/）。可用环境变量 SITE_BASE 覆盖；
+# 部署在站点根目录时设为空串
 SITE_BASE = os.environ.get("SITE_BASE", "/ddia").rstrip("/")
 
 TYPE_META = {
