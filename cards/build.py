@@ -239,16 +239,37 @@ def main():
     cards.sort(key=lambda c: c["id"])
     cards_html = "\n".join(render_card(c) for c in cards)
 
-    # group cards by chapter (extract leading §N)
+    # group cards by chapter (extract leading §N.M)
     import collections
     groups = collections.OrderedDict()
-    for c in cards:
+
+    def ch_sort_key(c):
+        m = re.match(r"§(\d+)(?:\.(\d+))?", c.get("chapter", ""))
+        if not m:
+            return (999, 99, c["id"])
+        return (int(m.group(1)), int(m.group(2) or 0), c["id"])
+
+    ch_names = {
+        "1": "第1章 数据系统架构中的权衡",
+        "2": "第2章 定义非功能性需求",
+        "3": "第3章 数据模型与查询语言",
+        "4": "第4章 存储与检索",
+        "5": "第5章 编码与演化",
+        "6": "第6章 复制",
+        "7": "第7章 分片",
+        "8": "第8章 事务",
+        "9": "第9章 一致性与共识",
+    }
+    for c in sorted(cards, key=ch_sort_key):
         ch = c.get("chapter", "其他")
-        m = re.match(r"§(\d+)", ch)
-        key = f"§{m.group(1)}" if m else "其他"
-        # 章标题映射
-        ch_names = {"5": "第5章 复制", "7": "第7章 事务"}
-        label = ch_names.get(m.group(1) if m else "", ch.split("（")[0]) if m else ch
+        m = re.match(r"§(\d+)(?:\.(\d+))?", ch)
+        if m:
+            num, sub = m.group(1), m.group(2)
+            key = f"§{num}.{sub}" if sub else f"§{num}"
+            label = (ch_names.get(num, ch.split("（")[0])
+                     + (f" · §{num}.{sub}" if sub else ""))
+        else:
+            key, label = "其他", ch
         groups.setdefault((key, label), []).append(c)
 
     toc_parts = ['<div class="toc-search"><input id="toc-search" type="search" '
